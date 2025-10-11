@@ -1,0 +1,86 @@
+
+Building a website using full stack methods.
+
+Setting up the backend with Node.js, Express, and TypeScript.
+
+0. Make sure node and npm are installed. Check by running 'node -v' and 'npm -v' in CMD. If not installed, download and install from https://nodejs.org/en/download.
+
+1. Scaffold the files and folder structures - create folders: backend, frontend; create files: .gitignore, README.md.
+
+2. Navigate into / Open CMD in 'backend' folder, and run command 'npm init'. This creates the 'package.json' file. It keeps track of the project's name and version, the dependencies to be installed, what scripts can be run, and some other metadata.
+
+3. Then, run command 'npm install express cookie-parser cors' to install the needed libraries. A 'node_modules' folder and a 'package-lock.json' file will be created.
+    express         - handles routings like /login, /api, /admin, etc.
+    cookie-parser   - used for login sessions, let's the server read and write browser cookies.
+    cors            - frontend and backend use different ports, so cors allow frontend to talk to backend safely.
+
+4. Then, run command 'npm install -D typescript tsx @types/node @types/express @types/cookie-parser @types/cors' to install TypeScript and its helper tools for the backend.
+    TypeScript  - Similar to JavaScript, but it enables writing of safer and cleaner code that checks itself before running. It's also run by the runtime/engine Node.js.
+    tsx         - A small helper to run .ts (TypeScript) files directly, so that we don't have to compile every time.
+    @types/...  - Tells TypeScript about those libraries, so VS Code can have error checking.
+
+5. Then, run command 'npx tsc --init'. This creates 'tsconfig.json' in the 'backend' folder, which is the TypeScript configuration file. Basically it tells TypeScript how to handle the .ts files.
+    npm = Node Package Manager. It installs packages.
+    npx = Node Package eXecute. It uses/runs the installed packages.
+
+6. Replace ALL contents of 'tsconfig.json' with:
+
+    {
+        "compilerOptions": {
+            "target": "ES2020",
+            "module": "CommonJS",
+            "rootDir": "src",
+            "outDir": "dist",
+            "strict": true,
+            "esModuleInterop": true
+        }
+    }
+
+    Note:
+        - target            - Compile into JavaScript that works with ES2020 features.
+        - module            - Use CommonJS modules, which are what Node uses.
+        - rootDir           - Where the .ts files are placed.
+        - outDir            - When compiled, the out JavaScript files are placed in there. 
+        - strict            - Enable strict type-checking options.
+        - esModuleInterop   - Allow default imports from modules that don't use ES modules. This makes it easier to use packages from npm.
+
+7. Now, inside 'backend' folder, create 'src' folder.
+
+8. Create a TypeScript file inside 'src' - 'server.ts' for testing purpose.
+
+    import express from "express"
+    import cookieParser from "cookie-parser"
+    import cors from "cors"
+
+    const app = express();
+
+    app.use(express.json());
+    app.use(cookieParser());
+    app.use(cors(
+        {
+            origin: "http://localhost:5173", // React frontend URL uses this port to talk to backend.
+            credentials: true
+        }
+    ));
+
+    // When the address is visited, this message will be shown.
+    app.get("/", (_req, res) => {
+        res.send("✅ Backend is running successfully!");
+    });
+
+    const PORT = 4000; // Backend running on this port, so we use this port with the address when testing on browser.
+
+    app.listen(PORT, () => {
+        console.log(`Server is listening on http://localhost:${PORT}`);
+    });
+
+9. Then, run command 'npx tsx src/server.ts' to test if the backend server is working. 
+    If it shows "Server is listening on http://localhost:4000", then open browser and go to that address. 
+    If it shows "✅ Backend is running successfully!", then the backend is working.
+    To stop the server, press Ctrl + C in the CMD.
+
+10. To make it easier to run the server, open 'package.json' and add the following under "scripts":
+
+    "start": "tsx src/server.ts"
+
+    Now, instead of running 'npx tsx src/server.ts', we can just run 'npm start' to start the server.
