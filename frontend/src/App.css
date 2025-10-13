@@ -1,0 +1,20 @@
+.layout {
+    min-height: 100vh;
+    min-width: 100vw;
+    margin: 0;
+}
+
+.header {
+    font-family: Consolas, sans-serif;
+    position: relative;
+    padding-top: 1vh;
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    text-align: center;
+}
+
+.page-content {
+    padding-top: 50px;
+    text-align: center;
+}

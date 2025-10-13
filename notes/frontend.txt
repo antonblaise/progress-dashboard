@@ -1,0 +1,75 @@
+Building a website using full stack methods.
+
+Setting up frontend
+
+0. Make sure node and npm are installed. Check by running 'node -v' and 'npm -v' in CMD. If not installed, download and install from https://nodejs.org/en/download.
+
+1. Create a folder named 'frontend' in the root directory, next to 'backend' folder.
+
+2. Navigate into / Open CMD in 'frontend' folder, and run command 'npm create vite@latest . -- --template react-ts'. Give 'y' to confirm if prompted.
+	npm create 				- Use npm to generate/create a new project.
+	vite@latest 			- Vite is a project generator. This means to use the latest version of Vite.
+	. 						- Create the project in the current folder. If you want to create in a new folder, replace '.' with the folder path/name.
+	-- 						- Separator between npm command and Vite options.
+	--template react-ts 	- Tells Vite what kind of project to make. 'react-ts' means React with TypeScript. If just 'react', then it would be React with JavaScript.
+
+3. AFter that, the frontend server may start automatically. You can open it in a browser on 'http://localhost:5173/' for testing. 5173 is the default frontend port for Vite.
+	If it doesn't start automatically, run command 'npm install' to install the dependencies, then run command 'npm run dev' to start the frontend server.
+	npm install 	- Install the dependencies listed in 'package.json'.
+	npm run dev 	- Run the 'dev' script listed in 'package.json', which starts the frontend server.
+
+4. Still having CMD in the 'frontend' folder, run command 'npm i react-router-dom', which is the router, so that we can route the subpages, like /login, /admin, etc.
+	npm i 				- Short for 'npm install'. Install the package(s) listed after it.
+	react-router-dom 	- The routing library for React.
+
+5. Now, we need to make the pages in 'src' folder. First, create the folder 'pages' inside 'src'. Then, create the pages you want inside it, as .tsx files.
+	Example pages:
+	- Main.tsx
+	- Admin.tsx
+	- Login.tsx
+
+6. In those .tsx files, put simple starter codes, like:
+
+	export default function Main() {
+		return <h1>Main Page</h1>;
+	}
+
+	Change 'Main' and 'Main Page' to the respective relevant page names.
+
+7. Now, open this file - 'frontend/src/main.tsx', empty it and write:
+
+	import React from "react";
+	import ReactDOM from "react-dom/client";
+	import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+
+	import App from "./App";
+	import Main from "./pages/Main";
+	import Login from "./pages/Login";
+	import Admin from "./pages/Admin";
+
+	import "./index.css";
+
+	ReactDOM.createRoot(document.getElementById("root")!).render(
+		<React.StrictMode>
+			<BrowserRouter>
+				<Routes>
+					<Route path="/" element={<App />}>
+					<Route index element={<Navigate to="/main" />} />
+					<Route path="/main" element={<Main />} />
+					<Route path="/login" element={<Login />} />
+					<Route path="/admin" element={<Admin />} />
+					</Route>
+				</Routes>
+			</BrowserRouter>
+		</React.StrictMode>
+	);
+
+	This is to route the pages to their respective links. Change the paths, positions and elements as needed.
+
+8. Now, to understand what each .tsx file is:
+	- main.tsx 			- The entry point component. The starting engine of the entire app. It sets up and loads the routing and renders the App component.
+	- App.tsx 			- The global layout component, wraps around all pages. It contains the common layout elements like header, footer, and a placeholder for rendering the current page based on the route.
+	- ./pages/*.tsx 	- The individual page components, like Main, Login, Admin. Each represents a different page/view in the app.
+	React apps don't use inidividual HTML files for each page. Instead, they use components and routing to dynamically render different views within a single-page application (SPA).
+
+9. Now, you can clear the 'src/App.css' file, and edit as you like.
