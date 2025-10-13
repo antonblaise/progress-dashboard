@@ -1,17 +1,31 @@
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+
 .layout {
     min-height: 100vh;
     min-width: 100vw;
     margin: 0;
+    font-family: "Press Start 2P";
+
 }
 
 .header {
-    font-family: Consolas, sans-serif;
+    font-size: large;
     position: relative;
-    padding-top: 1vh;
+    padding-top: 2vh;
     display: flex;
     justify-content: space-around;
     align-items: center;
     text-align: center;
+}
+
+.header a {
+    color: purple;
+    transition: all 0.5s;
+}
+
+.header a:hover {
+    color: orangered;
+    font-weight: bolder;
 }
 
 .page-content {

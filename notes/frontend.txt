@@ -65,6 +65,7 @@ Setting up frontend
 	);
 
 	This is to route the pages to their respective links. Change the paths, positions and elements as needed.
+	In this case, notice that whenever the user goes to the root '/', they will be redirected to '/main' page.
 
 8. Now, to understand what each .tsx file is:
 	- main.tsx 			- The entry point component. The starting engine of the entire app. It sets up and loads the routing and renders the App component.
@@ -73,3 +74,5 @@ Setting up frontend
 	React apps don't use inidividual HTML files for each page. Instead, they use components and routing to dynamically render different views within a single-page application (SPA).
 
 9. Now, you can clear the 'src/App.css' file, and edit as you like.
+
+10. After that, you can run 'npm run dev' to start the frontend server. It should be running on 'http://localhost:5173/', which you can open in a browser for testing.
