@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import { useEffect, useState } from "react";
 import "./Main.css"
 
 // Arrays to store the carlines and stages
@@ -31,6 +32,62 @@ function slugify(str: string) {
 
 export default function Main() {
 
+	// Live update of progress from localStorage
+	// --------------------------------------------
+	// 1) progress state - function 'setProgress' updates the variable 'progress'.
+	const [progress, setProgress] = useState<Record<string, number>>({});
+
+	// 2) helper to load all progress from localStorage
+	const loadProgress = () => {
+		const all: Record<string, number> = {};
+		for (const carline of carlines) {
+			for (const stage of stages) {
+				all[`${slugify(carline)}-${slugify(stage.title)}`] = Number(localStorage.getItem(`progress:${`${slugify(carline)}-${slugify(stage.title)}`}`) ?? "0");
+			}
+		}
+		setProgress(all);
+	};
+
+	// 3) on mount: load once + listen for storage changes
+	// useEffect - a React hook that runs side effects in function components
+	// The empty dependency array [] means this effect runs once after the initial render.
+	// If [] is given variables, means it depends on the variables. It runs whenever the dependency variables change.
+	useEffect(() => {
+		loadProgress();
+
+		const onStorage = (e: StorageEvent) => {
+
+			// If event key does not start with "progress:", ignore it.
+			if (!e.key?.startsWith("progress:")) return;
+
+			// From localStorage -> progress:t-line-stage-1
+			// Remove "progress:" prefix to get the slug.
+			const slug = e.key.replace("progress:", "");
+
+			// Number() means to convert any number string to a number type.
+			// If the string is not a valid number, it returns NaN (Not a Number)
+			const val = Number(e.newValue ?? "0");
+
+			// Take the old progress object, 
+			// update (or add) the value for the current slug key, 
+			// and set it to val (or 0 if val is not a number). 
+			// Then save this new object as the new progress state.
+			setProgress((prev) => (
+				{ 
+					...prev,
+					[slug]: Number.isNaN(val) ? 0 : val 
+				}
+			));
+		};
+
+		// Start listening for storage change events.
+		window.addEventListener("storage", onStorage);
+
+		// Clean up the listener if you leave this page.
+		return () => window.removeEventListener("storage", onStorage);
+
+	}, []);
+
 	return (
 		<div className="main-container">
 			<table className="main-table">
@@ -43,17 +100,28 @@ export default function Main() {
 					</tr>
 				</thead>
 				<tbody>
+
+					{/* Outer loop (table row): Carlines */}
 					{carlines.map((carline) => (
+
 						<tr key={carline}>
 							<td className="carline-label">{carline}</td>
+
+							{/* Inner loop (Table data - column): Stages */}
 							{stages.map((stage) => {
+
 								const carlineSlug = slugify(carline);
 								const stageSlug = slugify(stage.title);
 								const linkTo = `/${carlineSlug}/${stageSlug}`;
+
+								const progress_percentage = Number(localStorage.getItem(`progress:${carlineSlug}-${stageSlug}`) ?? 0);
+
 								return (
 									<td key={linkTo}>
 										<Link to={linkTo} className="box-link" title={carline + " - " + stage.title}>
-											<div className="box" />
+											<div className="box">
+												<div className="box-fill" style={ {width: `${progress_percentage}%`} } />
+											</div>
 										</Link>
 									</td>
 								);
