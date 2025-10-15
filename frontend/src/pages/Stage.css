@@ -1,0 +1,44 @@
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+
+h1 {
+    color: orange;
+}
+
+.layout {
+    min-height: 100vh;
+    min-width: 100vw;
+    margin: 0;
+    font-family: "Press Start 2P";
+}
+
+.checklist {
+    display: flex;
+    flex-direction: column;
+    justify-content: center; /* centers the container horizontally */
+    align-items: flex-start;     /* centers vertically if you want */
+    padding-left: 5%;
+    padding-top: 2%;
+    line-height: 3;
+}
+
+.checklist a {
+    font-size: large;
+    color: skyblue;
+    transition: all 0.5s;
+}
+
+.checklist a:hover {
+    color: darkblue;
+}
+
+.checklist-item input[type="checkbox"] {
+    width: 1.7em;
+    height: 1.7em;
+    accent-color: lime;
+    margin-right: 1.2em;
+    margin-left: 0.5em;
+    padding: 0.5em;
+    cursor: pointer;
+}
+
+
