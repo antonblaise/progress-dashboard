@@ -24,11 +24,11 @@ h1 {
 .checklist a {
     font-size: large;
     color: skyblue;
-    transition: all 0.5s;
+    transition: all 0.25s;
 }
 
 .checklist a:hover {
-    color: darkblue;
+    color: blue;
 }
 
 .checklist-item input[type="checkbox"] {

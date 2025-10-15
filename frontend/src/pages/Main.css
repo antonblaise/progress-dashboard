@@ -1,12 +1,4 @@
-.box-progress-text {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    font-size: 0.7em;
-    color: #222;
-    opacity: 0.2;
-}
+
 .main-container {
     min-height: 70vh;
     display: flex;
@@ -38,6 +30,7 @@
     min-width: 180px;
     max-width: 260px;
     text-align: left;
+    color: lightslategray;
 }
 
 .sw-release-name-header, .integrator-name-header {
@@ -52,11 +45,8 @@
     color: red;
     border: none;
     text-align: center;
-}
-
-.sw-release-name::placeholder, .integrator-name::placeholder {
-    color: #000000;
-    opacity: 0.1;
+    background: transparent;
+    text-transform: uppercase;
 }
 
 .integrator-name {
@@ -66,12 +56,20 @@
     color: goldenrod;
     border: none;
     text-align: center;
+    background: transparent;
 }
+
+.sw-release-name::placeholder, .integrator-name::placeholder {
+    color: #ffffff;
+    opacity: 0.15;
+    text-transform: capitalize;
+}
+
 
 .box {
     width: 100px;
     height: 80px;
-    border: 1px solid black;
+    border: 1px solid rgb(255, 255, 255);
     background: transparent;
     transition: 0.25s;
     position: relative;
@@ -80,10 +78,10 @@
 
 .box:hover {
     cursor: pointer;
-    background-color: rgb(243, 253, 255);
+    background-color: rgb(29, 29, 29);
     transform: scale(1.05);
     z-index: 1; 
-    box-shadow: #afafaf 0px 2px 4px 0px, rgb(204, 204, 204) 0px 3px 10px 0px;
+    border: none;
 }
 
 .box-fill {
@@ -91,7 +89,17 @@
     left: 0;
     top: 0;
     height: 100%;
-    background: greenyellow;
+    background: limegreen;
     width: 0%;
     transition: width 0.25s;
+}
+
+.box-progress-text {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 0.7em;
+    color: #ffffff;
+    opacity: 0.3;
 }
