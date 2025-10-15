@@ -61,7 +61,10 @@ export default function Stage() {
 								<input 
 									type="checkbox"
 									checked={!!checked[index]}
+									title={item.text}
+
 									onChange={(e) => {
+
 										const next = [...checked];
 										next[index] = e.target.checked;
 										setChecked(next);

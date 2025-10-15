@@ -1,4 +1,3 @@
-
 Building a website using full stack methods.
 
 Setting up the backend with Node.js, Express, and TypeScript.

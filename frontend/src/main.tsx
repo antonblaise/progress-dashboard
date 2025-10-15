@@ -21,17 +21,28 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
                     <Route path="/login" element={<Login />} />
                     <Route path="/admin" element={<Admin />} />
 
-                    <Route path="/:carline/:stage" element={<Stage />} />
+                    <Route 
+                        path="/checklist/:carline/:stage" 
+                        element={<Stage />} 
+                    />
                     <Route
-                        path="/:carline"
+                        path="/checklist/:carline"
                         element={
                             (() => {
-                                const carline = location.pathname.split("/")[1];
-                                return <Navigate to={`/${carline}/stage-1`} replace />;
+                                const carline = location.pathname.split("/")[2];
+                                return <Navigate to={`/checklist/${carline}/stage-1`} replace />;
                             })()
                         }
                     />
-                    
+                    <Route
+                        path="/checklist"
+                        element={
+                            (() => {
+                                return <Navigate to="/main" />;
+                            })()
+                        }
+                    />
+
                 </Route>
             </Routes>
         </BrowserRouter>

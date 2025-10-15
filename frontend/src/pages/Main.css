@@ -1,9 +1,18 @@
+.box-progress-text {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 0.7em;
+    color: #222;
+    opacity: 0.2;
+}
 .main-container {
     min-height: 70vh;
     display: flex;
     align-items: center;
-    justify-content: left;
-    padding-left: 5%;
+    justify-content: center;
+    padding-left: 2%;
 }
 
 .main-table {
@@ -13,20 +22,50 @@
 .main-table td {
     border: none;
     padding: 6px 6px;
+    align-items: center;
 }
 
 .stage-label {
     font-size: x-small;
-    color: darkblue;
+    color: palevioletred;
     rotate: 45deg;
-    padding-bottom: 1%;
-    padding-right: 1%;
+    padding-bottom: 2%;
+    padding-right: 2%;
+    text-align: right;
 }
 
-.carline-label {
+.carlines {
     min-width: 180px;
     max-width: 260px;
     text-align: left;
+}
+
+.sw-release-name-header, .integrator-name-header {
+    color: turquoise;
+    min-width: 15vw;
+}
+
+.sw-release-name {
+    height: 50px;
+    width: 400px;
+    font-family: "Press Start 2P";
+    color: red;
+    border: none;
+    text-align: center;
+}
+
+.sw-release-name::placeholder, .integrator-name::placeholder {
+    color: #000000;
+    opacity: 0.1;
+}
+
+.integrator-name {
+    height: 50px;
+    width: 300px;
+    font-family: "Press Start 2P";
+    color: goldenrod;
+    border: none;
+    text-align: center;
 }
 
 .box {
@@ -34,14 +73,17 @@
     height: 80px;
     border: 1px solid black;
     background: transparent;
-    transition: 0.5s;
+    transition: 0.25s;
     position: relative;
     overflow: hidden;
 }
 
 .box:hover {
     cursor: pointer;
-    background-color: #f5f5f5;
+    background-color: rgb(243, 253, 255);
+    transform: scale(1.05);
+    z-index: 1; 
+    box-shadow: #afafaf 0px 2px 4px 0px, rgb(204, 204, 204) 0px 3px 10px 0px;
 }
 
 .box-fill {
@@ -49,7 +91,7 @@
     left: 0;
     top: 0;
     height: 100%;
-    background: lightgreen;
+    background: greenyellow;
     width: 0%;
     transition: width 0.25s;
 }

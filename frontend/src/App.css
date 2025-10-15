@@ -20,12 +20,13 @@
 
 .header a {
     color: purple;
-    transition: all 0.5s;
+    transition: all 0.25s;
 }
 
 .header a:hover {
     color: orangered;
     font-weight: bolder;
+    font-size: larger;
 }
 
 .page-content {

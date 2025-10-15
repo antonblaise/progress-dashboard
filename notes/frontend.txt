@@ -27,8 +27,9 @@ Setting up frontend
 	- Main.tsx
 	- Admin.tsx
 	- Login.tsx
+	To design the pages, create their respective .css files in 'src' as well, and import them in the .tsx files.
 
-6. In those .tsx files, put simple starter codes, like:
+6. In those .tsx files, put simple starter codes, like for example:
 
 	export default function Main() {
 		return <h1>Main Page</h1>;
@@ -76,3 +77,5 @@ Setting up frontend
 9. Now, you can clear the 'src/App.css' file, and edit as you like.
 
 10. After that, you can run 'npm run dev' to start the frontend server. It should be running on 'http://localhost:5173/', which you can open in a browser for testing.
+
+11. Now that you have a basic frontend setup, you can start developing your pages and components as needed!
