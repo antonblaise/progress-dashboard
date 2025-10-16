@@ -71,7 +71,6 @@
     height: 80px;
     border: 1px solid rgb(255, 255, 255);
     background: transparent;
-    transition: 0.25s;
     position: relative;
     overflow: hidden;
 }
@@ -91,7 +90,7 @@
     height: 100%;
     background: limegreen;
     width: 0%;
-    transition: width 0.25s;
+    transition: width 0.5s;
 }
 
 .box-progress-text {
@@ -102,4 +101,13 @@
     font-size: 0.7em;
     color: #ffffff;
     opacity: 0.3;
+}
+
+.reset-buttons-column {
+    padding-left: 5em;
+    padding-right: 5em;
+}
+
+.reset-buttons-column button:hover {
+    background-color: red;
 }

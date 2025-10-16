@@ -24,7 +24,6 @@ h1 {
 .checklist a {
     font-size: large;
     color: skyblue;
-    transition: all 0.25s;
 }
 
 .checklist a:hover {
@@ -41,4 +40,31 @@ h1 {
     cursor: pointer;
 }
 
+.buttons {
+    display: flex;
+    justify-content: space-around;
+    padding: 3%;
+}
+
+.tickall-button {
+    background-color: darkslategrey;
+    border: none;
+    height: 3em;
+    width: 10em;
+}
+
+.tickall-button:hover {
+    background-color: limegreen;
+}
+
+.reset-button {
+    background-color: darkslategrey;
+    border: none;
+    height: 3em;
+    width: 10em;
+}
+
+.reset-button:hover {
+    background-color: red;
+}
 

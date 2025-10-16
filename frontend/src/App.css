@@ -27,7 +27,6 @@
 
 .header a {
     color: purple;
-    transition: all 0.25s;
 }
 
 .header a:hover {

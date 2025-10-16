@@ -144,7 +144,7 @@ export default function Main() {
 
 				<thead>
 					<tr>
-						<th className="carline-header" aria-hidden="true"></th>
+						<th className="carline-header"><img alt="Flowey" src="/undertale-flowey.ico"></img></th>
 						<th className="sw-release-name-header">Release Name</th>
 						<th className="integrator-name-header">Integrator</th>
 
@@ -227,6 +227,32 @@ export default function Main() {
 								);
 							})}
 							{/* ======================================================================================================== */}
+						
+							{/* Final column - Reset buttons */}
+							<td>
+								<div className="reset-buttons-column">
+									<button
+										title="Reset Buttons"
+										onClick={() => {
+
+											// Prompt for confirmation
+											if (!window.confirm(`Are you sure you want to reset all progress for ${carline}? This action cannot be undone.`)) {
+												return;
+											}
+
+											// Clear all progress for this carline
+											for (const stage of stages) {
+												localStorage.removeItem(`progress:${slugify(carline)}-${slugify(stage.title)}`);
+												localStorage.removeItem(`checked:${slugify(carline)}-${slugify(stage.title)}`);
+											}
+
+											// Reload page
+											window.location.reload();
+										}}
+									>Reset</button>
+								</div>
+							</td>
+						
 						</tr>
 
 					))}

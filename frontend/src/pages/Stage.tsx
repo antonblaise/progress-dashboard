@@ -95,6 +95,36 @@ export default function Stage() {
 
 			</div>
 
+			<div className="buttons">
+				{/* Done */}
+				<button
+					title="Done"
+					className="tickall-button"
+					onClick={() => {
+						const done = Array(checklist_statements.length).fill(true);
+						localStorage.setItem(`checked:${carline}-${stage}`, JSON.stringify(done));
+						localStorage.setItem(`progress:${carline}-${stage}`, "100");
+
+						// Reload page
+						window.location.reload();
+					}}
+				>Done</button>
+
+				{/* Reset */}
+				<button
+					title="Reset"
+					className="reset-button"
+					onClick={() => {
+						const reset = new Array(checklist_statements.length).fill(false);
+						localStorage.setItem(`checked:${carline}-${stage}`, JSON.stringify(reset));
+						localStorage.setItem(`progress:${carline}-${stage}`, "0");
+
+						// reload page
+						window.location.reload();
+					}}
+				>Reset</button>
+			</div>
+
 
 
 		</div>
