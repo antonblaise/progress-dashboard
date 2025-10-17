@@ -24,3 +24,27 @@ app.listen(PORT, () => {
     console.log(`Server is listening on http://localhost:${PORT}`);
 });
 
+// --- Minimal in-memory store (temporary; DB later) ---
+const kv: Record<string, string> = {
+    integrator_name: ""
+};
+
+// GET current integrator name
+app.get("/api/main/integrator", (_req, res) => {
+    res.json(
+        {
+            integrator: kv["integrator_name"] ?? ""
+        }
+    )
+});
+
+// UPDATE integrator name
+app.put("/api/main/integrator", (req, res) => {
+    const value = String(req.body?.value ?? "");
+    kv["integrator_name"] = value;
+    res.json(
+        {
+            ok: true
+        }
+    )
+});
