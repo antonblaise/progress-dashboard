@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { use, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import "./Main.css"
 
 // Arrays to store the carlines and stages
@@ -8,7 +8,7 @@ const carlines = [
 	"S Line",
 	"S MOPF Line",
 	"RB Line"
-]
+];
 
 const stages = [
 	{ to: "/stage1", title: "Stage 1" },
@@ -23,7 +23,36 @@ const stages = [
 	{ to: "/stage10", title: "Stage 10" },
 	{ to: "/stage11", title: "Stage 11" },
 	{ to: "/stage12", title: "Stage 12" }
-]
+];
+
+// Create a storage variable to store all data, which will eventually be sent to the backend.
+const dataStorage = {
+
+	get(key: string): string | null {
+		try {
+			return localStorage.getItem(key);
+		} catch {
+			return null;
+		}
+	},
+
+	set(key: string, value: string): void {
+		try {
+			localStorage.setItem(key, value);
+		} catch {
+			// Ignore write errors
+		}
+	},
+
+	remove(key: string): void {
+		try {
+			localStorage.removeItem(key);
+		} catch {
+			// Ignore remove errors	
+		}
+	},
+
+};
 
 // Helper to slugify carline and stage (preserve dashes between words)
 function slugify(str: string) {
@@ -32,71 +61,33 @@ function slugify(str: string) {
 
 export default function Main() {
 
-	// ################################################ //
-	// Read the progress from localStorage in real time	//
-	// ################################################ //
+	// ################################## //
+	// Read the progress from dataStorage //
+	// ################################### //
 
-	// 1. progress state - function 'setProgress' updates the variable 'progress'.
-	// The output of useState is an array where the first element is the current state value, and the second element is a function to update that state.
-	// Record<string, number> means an object with string keys and number values.
-	const [progress, setProgress] = useState<Record<string, number>>({});
+	// 1. progress state - function 'setProgress' updates the variable 'progress', which is replaced by '_' here, as we don't need it.
+	// The output of useState is an array where:
+	// 		the first element is the current state value, 
+	// 		and the second element is a function to update that state.
+	// In this case, we only need to create/declare/define the 2nd element - the function,
+	// whereby whenever it's called, the page re-renders. (Not refresh, not reload)
+	const [_, setProgress] = useState({});
 
-	// 2. helper to load all progress from localStorage
+	// 2. helper to load all progress from dataStorage
 	// Number() means to convert any number string to a number type.
 	// If the string is not a valid number, it returns NaN (Not a Number)
 	const loadProgress = () => {
-		const all: Record<string, number> = {};
+		const allProgress: Record<string, number> = {};
 		for (const carline of carlines) {
 			for (const stage of stages) {
-				all[`${slugify(carline)}-${slugify(stage.title)}`] = Number(localStorage.getItem(`progress:${`${slugify(carline)}-${slugify(stage.title)}`}`) ?? "0");
+				allProgress[`${slugify(carline)}-${slugify(stage.title)}`] = Number(dataStorage.get(`progress:${`${slugify(carline)}-${slugify(stage.title)}`}`) ?? "0");
 			}
 		}
-		setProgress(all);
+		setProgress(allProgress);
 	};
 
-	// 3. on mount: load once + listen for storage changes
-	// useEffect - a React hook that runs side effects in function components
-	// The empty dependency array [] means this effect runs once after the initial render.
-	// If [] is given variables, means it depends on the variables. It runs whenever the dependency variables change.
-	useEffect(() => {
-		loadProgress();
-
-		const onStorage = (e: StorageEvent) => {
-
-			// If event key does not start with "progress:", ignore it.
-			if (!e.key?.startsWith("progress:")) return;
-
-			// From localStorage -> progress:t-line-stage-1
-			// Remove "progress:" prefix to get the slug.
-			const slug = e.key.replace("progress:", "");
-
-			// Number() means to convert any number string to a number type.
-			// If the string is not a valid number, it returns NaN (Not a Number)
-			const val = Number(e.newValue ?? "0");
-
-			// Take the old progress object, 
-			// update (or add) the value for the current slug key, 
-			// and set it to val (or 0 if val is not a number). 
-			// Then save this new object as the new progress state.
-			setProgress((prev) => (
-				{ 
-					...prev,
-					[slug]: Number.isNaN(val) ? 0 : val 
-				}
-			));
-		};
-
-		// Start listening for storage change events.
-		window.addEventListener("storage", onStorage);
-
-		// Clean up the listener if you leave this page.
-		return () => window.removeEventListener("storage", onStorage);
-
-	}, []);
-
-
 	// ############################################################################################ //
-	// Read and write the SW Release Name and Integrator Name from and to localStorage in real time	//
+	// Read and write the SW Release Name and Integrator Name from and to dataStorage in real time	//
 	// ############################################################################################ //
 
 	// 1. Declare state variables for SW Release Names and Integrator Names, with functions to update them.
@@ -105,19 +96,20 @@ export default function Main() {
 	const [swReleaseNames, setSwReleaseNames] = useState<Record<string, string>>({});
 	const [integratorNames, setIntegratorNames] = useState<Record<string, string>>({});
 
-	// 2. Create a function to load them from localStorage.
+	// 2. Create a function to load them from dataStorage.
 	const loadSWReleaseAndIntegratorNames = () => {
 
 		const temp_swReleaseNames: Record<string, string> = {};
 		const temp_integratorNames: Record<string, string> = {};
 
 		for (const carline of carlines) {
-			// Load them from localStorage
-			const swReleaseName = localStorage.getItem(`swReleaseName:${slugify(carline)}`) ?? "";
-			const integratorName = localStorage.getItem(`integratorName:${slugify(carline)}`) ?? "";
+
+			// Load them from dataStorage
+			const swReleaseName = dataStorage.get(`swReleaseName:${slugify(carline)}`) ?? "";
+			const integratorName = dataStorage.get(`integratorName:${slugify(carline)}`) ?? "";
 
 			// Update the state variables
-			// This is to ensure the input boxes show the latest values from localStorage.
+			// This is to ensure the input boxes show the latest values from dataStorage.
 			temp_swReleaseNames[slugify(carline)] = swReleaseName;
 			temp_integratorNames[slugify(carline)] = integratorName;
 		}
@@ -127,11 +119,59 @@ export default function Main() {
 
 	}
 
-	// 3. Call the load function on mount.
+	// #############################################################################################//
+	// Call the load function on mount. Also, listen to and load any live changes from dataStorage.	//
+	// #############################################################################################//
+
 	// Mount means when the component is first rendered. 
-	// Rendered means converted from tsx to html.
+	// Rendered means converted from tsx to html. Render does not mean refresh/reload the page.
 	useEffect(() => {
+
+		loadProgress();
 		loadSWReleaseAndIntegratorNames();
+
+		// Whenever there is a change in dataStorage from other tabs/windows...
+		const onStorage = (e: StorageEvent) => {
+
+			// If event key does not start with "swReleaseName:" or "integratorName:", ignore it.
+			if (!e.key?.startsWith("progress:") && !e.key?.startsWith("swReleaseName:") && !e.key?.startsWith("integratorName:")) return;
+
+			// Examples:
+			// From dataStorage -> progress:t-line-stage-1, carlineAndStageSlug = t-line-stage-1
+			// From dataStorage -> swReleaseName:t-line, carlineSlug = t-line
+			// From dataStorage -> integratorName:s-line, carlineSlug = s-line
+			const carlineAndStageSlug = e.key.replace(`progress:`, "");
+			const keyType = e.key.startsWith("swReleaseName:") ? "swReleaseName" : "integratorName";
+			const carlineSlug = e.key.replace(`${keyType}:`, "");
+
+			// Set the appropriate state variable based on the key of the event.
+			if (e.key?.startsWith("progress:")) {
+				const carlineAndStageProgressVal = Number(e.newValue ?? "0");
+				setProgress((prev) => (
+					{
+						...prev,
+						[carlineAndStageSlug]: Number.isNaN(carlineAndStageProgressVal) ? 0 : carlineAndStageProgressVal
+					}
+				));
+			} else if (keyType === "swReleaseName") {
+				setSwReleaseNames((prev) => ({
+					...prev,
+					[carlineSlug]: e.newValue ?? ""
+				}));
+			} else if (keyType === "integratorName") {
+				setIntegratorNames((prev) => ({
+					...prev,
+					[carlineSlug]: e.newValue ?? ""
+				}));
+			}  
+		};
+
+		// Listen to storage events.
+		window.addEventListener("storage", onStorage);
+
+		// Stop listening on exit.
+		return () => window.removeEventListener("storage", onStorage);
+
 	}, []);
 
 
@@ -144,7 +184,7 @@ export default function Main() {
 
 				<thead>
 					<tr>
-						<th className="carline-header"><img alt="Flowey" src="/undertale-flowey.ico"></img></th>
+						<th className="carline-header" aria-hidden="true"></th>
 						<th className="sw-release-name-header">Release Name</th>
 						<th className="integrator-name-header">Integrator</th>
 
@@ -179,7 +219,7 @@ export default function Main() {
 												...prev,
 												[slugify(carline)]: value,
 											}));
-											localStorage.setItem(`swReleaseName:${slugify(carline)}`, value); // save instantly
+											dataStorage.set(`swReleaseName:${slugify(carline)}`, value); // save instantly
 										}}
 									/>
 								</label>
@@ -200,7 +240,7 @@ export default function Main() {
 												...prev,
 												[slugify(carline)]: value,
 											}));
-											localStorage.setItem(`integratorName:${slugify(carline)}`, value); // save instantly
+											dataStorage.set(`integratorName:${slugify(carline)}`, value); // save instantly
 										}}
 									/>
 								</label>
@@ -213,7 +253,7 @@ export default function Main() {
 								const stageSlug = slugify(stage.title);
 								const linkTo = `/checklist/${carlineSlug}/${stageSlug}`;
 
-								const progress_percentage = Number(localStorage.getItem(`progress:${carlineSlug}-${stageSlug}`) ?? 0);
+								const progress_percentage = Number(dataStorage.get(`progress:${carlineSlug}-${stageSlug}`) ?? 0);
 
 								return (
 									<td key={linkTo}>
@@ -242,8 +282,8 @@ export default function Main() {
 
 											// Clear all progress for this carline
 											for (const stage of stages) {
-												localStorage.removeItem(`progress:${slugify(carline)}-${slugify(stage.title)}`);
-												localStorage.removeItem(`checked:${slugify(carline)}-${slugify(stage.title)}`);
+												dataStorage.remove(`progress:${slugify(carline)}-${slugify(stage.title)}`);
+												dataStorage.remove(`checked:${slugify(carline)}-${slugify(stage.title)}`);
 											}
 
 											// Reload page
