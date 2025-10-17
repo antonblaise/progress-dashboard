@@ -1,3 +1,5 @@
+// TSX file for the Main page
+
 import { Link } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { dataStorage } from "../utils/dataStorage";

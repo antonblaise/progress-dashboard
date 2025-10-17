@@ -113,3 +113,13 @@ Setting up the backend with Node.js, Express, and TypeScript.
 
     import db from "./db.js";
 
+
+========================================= Tools involved =========================================
+
+- Node.js         - JavaScript runtime environment that runs JavaScript code outside of a browser. It is used to run the backend server.
+- npm             - Node Package Manager. It is used to install and manage libraries/packages for Node.
+- TypeScript      - A superset of JavaScript that adds static types. It helps catch errors during development and improves code quality.
+- Express         - A web application framework for Node.js. It simplifies the process of building web servers and APIs.
+- Cookie-Parser   - A middleware for Express that parses cookies attached to the client request object. It is used for handling login sessions. (Not implemented yet)
+- SQLite3         - A lightweight, file-based database. It is used to store and manage data for the backend.
+- Socket.io       - A library for real-time web applications. It enables real-time, bidirectional communication between web clients and servers. (Not implemented yet)

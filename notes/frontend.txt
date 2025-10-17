@@ -96,3 +96,12 @@ Setting up frontend
 
 - In CSS, Flexbox can be used to evenly space items horizontally or vertically. It's a very useful layout tool. Learn more about it at https://css-tricks.com/snippets/css/a-guide-to-flexbox/.
 
+
+========================================= Tools involved =========================================
+
+- Node.js		- JavaScript runtime environment that runs JavaScript code outside of a browser. It is used to run the backend server.
+- npm			- Node Package Manager. It is used to install and manage libraries/packages for Node.
+- React			- The frontend framework used to build the user interface.
+- Vite			- The build tool and development server for frontend.
+- React Router	- The routing library for React to handle navigation between pages.
+- TypeScript	- The programming language used, which is a superset of JavaScript with static typing.
