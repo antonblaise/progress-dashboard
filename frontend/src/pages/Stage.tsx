@@ -2,6 +2,7 @@
 
 import { useParams } from "react-router-dom";
 import { useState, useEffect } from "react";
+import { dataStorage } from "../utils/dataStorage";
 import "./Stage.css";
 
 const checklist_statements = [
@@ -20,30 +21,34 @@ export default function Stage() {
 	// slug example: t-line-stage-1. Standard across tsx files.
 	const slug = `${carline}-${stage}`;
 
-	useEffect(() => {
-
-		// Mechanism to prevent the checked boxes from being cleared upon page refresh, by reflecting what's saved in the memory.
-		// Read saved data of 'checked'
-		const saved_checked_raw = localStorage.getItem(`checked:${slug}`);
-		if (!saved_checked_raw) return;
-
-		try {
-			const saved_checked: boolean[] = JSON.parse(saved_checked_raw);
-
-			// Match its length with checklist_statements' length to prevent error.
-			// Double (!) means to force convert it into boolean. Although in our case, it should already be boolean.
-			const normalised_checked = checklist_statements.map((_, i) => !!saved_checked[i]);
-			setChecked(normalised_checked);
-
-		} catch {
-			// If data is corrupted, ignore and keep defaults.
-		}
-
-	}, [slug])
-
 	const [checked, setChecked] = useState<boolean[]>(
 		() => new Array(checklist_statements.length).fill(false)
 	);
+
+	useEffect(() => {
+
+		(async () => {
+
+			// Mechanism to prevent the checked boxes from being cleared upon page refresh, by reflecting what's saved in the memory.
+			// Read saved data of 'checked'
+			const saved_checked_raw = await dataStorage.get(`stageItemChecked:${slug}`);
+			if (!saved_checked_raw) return;
+	
+			try {
+				const saved_checked: boolean[] = JSON.parse(saved_checked_raw);
+	
+				// Match its length with checklist_statements' length to prevent error.
+				// Double (!) means to force convert it into boolean. Although in our case, it should already be boolean.
+				const normalised_checked = checklist_statements.map((_, i) => !!saved_checked[i]);
+				setChecked(normalised_checked);
+	
+			} catch {
+				// If data is corrupted, ignore and keep defaults.
+			}
+
+		})();
+
+	}, [slug])
 
 	return (
 		<div>
@@ -69,13 +74,17 @@ export default function Stage() {
 										next[index] = e.target.checked;
 										setChecked(next);
 
-										localStorage.setItem(`checked:${carline}-${stage}`, JSON.stringify(next));
+										dataStorage.set(`stageItemChecked:${carline}-${stage}`, JSON.stringify(next));
 
 										const total = checklist_statements.length || 1;
 										const done = next.filter(Boolean).length;
 										const percentage = Math.round( (done / total) * 100 );
 
-										localStorage.setItem(`progress:${carline}-${stage}`, String(percentage))
+										dataStorage.set(`stageProgress:${carline}-${stage}`, String(percentage))
+
+										// TEMP: keep localStorage writes to trigger Main’s onStorage listener
+										localStorage.setItem(`stageItemChecked:${carline}-${stage}`, JSON.stringify(next));
+										localStorage.setItem(`stageProgress:${carline}-${stage}`, String(percentage))
 
 									}}
 								/>
@@ -102,8 +111,10 @@ export default function Stage() {
 					className="tickall-button"
 					onClick={() => {
 						const done = Array(checklist_statements.length).fill(true);
-						localStorage.setItem(`checked:${carline}-${stage}`, JSON.stringify(done));
-						localStorage.setItem(`progress:${carline}-${stage}`, "100");
+						dataStorage.set(`stageItemChecked:${carline}-${stage}`, JSON.stringify(done));
+						dataStorage.set(`stageProgress:${carline}-${stage}`, "100");
+						localStorage.setItem(`stageItemChecked:${carline}-${stage}`, JSON.stringify(done));
+						localStorage.setItem(`stageProgress:${carline}-${stage}`, "100");
 
 						// Reload page
 						window.location.reload();
@@ -116,8 +127,10 @@ export default function Stage() {
 					className="reset-button"
 					onClick={() => {
 						const reset = new Array(checklist_statements.length).fill(false);
-						localStorage.setItem(`checked:${carline}-${stage}`, JSON.stringify(reset));
-						localStorage.setItem(`progress:${carline}-${stage}`, "0");
+						dataStorage.set(`stageItemChecked:${carline}-${stage}`, JSON.stringify(reset));
+						dataStorage.set(`stageProgress:${carline}-${stage}`, "0");
+						localStorage.setItem(`stageItemChecked:${carline}-${stage}`, JSON.stringify(reset));
+						localStorage.setItem(`stageProgress:${carline}-${stage}`, "0");
 
 						// reload page
 						window.location.reload();

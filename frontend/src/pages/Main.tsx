@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import { useEffect, useState } from "react";
+import { dataStorage } from "../utils/dataStorage";
 import "./Main.css"
 
 // Arrays to store the carlines and stages
@@ -25,35 +26,6 @@ const stages = [
 	{ to: "/stage12", title: "Stage 12" }
 ];
 
-// Create a storage variable to store all data, which will eventually be sent to the backend.
-const dataStorage = {
-
-	get(key: string): string | null {
-		try {
-			return localStorage.getItem(key);
-		} catch {
-			return null;
-		}
-	},
-
-	set(key: string, value: string): void {
-		try {
-			localStorage.setItem(key, value);
-		} catch {
-			// Ignore write errors
-		}
-	},
-
-	remove(key: string): void {
-		try {
-			localStorage.removeItem(key);
-		} catch {
-			// Ignore remove errors	
-		}
-	},
-
-};
-
 // Helper to slugify carline and stage (preserve dashes between words)
 function slugify(str: string) {
 	return str.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
@@ -71,16 +43,18 @@ export default function Main() {
 	// 		and the second element is a function to update that state.
 	// In this case, we only need to create/declare/define the 2nd element - the function,
 	// whereby whenever it's called, the page re-renders. (Not refresh, not reload)
-	const [_, setProgress] = useState({});
+	const [progress, setProgress] = useState<Record<string, number>>({});
 
 	// 2. helper to load all progress from dataStorage
 	// Number() means to convert any number string to a number type.
 	// If the string is not a valid number, it returns NaN (Not a Number)
-	const loadProgress = () => {
+	const loadProgress = async () => {
 		const allProgress: Record<string, number> = {};
 		for (const carline of carlines) {
 			for (const stage of stages) {
-				allProgress[`${slugify(carline)}-${slugify(stage.title)}`] = Number(dataStorage.get(`progress:${`${slugify(carline)}-${slugify(stage.title)}`}`) ?? "0");
+				const raw = await dataStorage.get(`stageProgress:${slugify(carline)}-${slugify(stage.title)}`);
+				const val = Number(raw ?? "0");
+				allProgress[`${slugify(carline)}-${slugify(stage.title)}`] = Number.isFinite(val) ? val : 0;
 			}
 		}
 		setProgress(allProgress);
@@ -97,7 +71,7 @@ export default function Main() {
 	const [integratorNames, setIntegratorNames] = useState<Record<string, string>>({});
 
 	// 2. Create a function to load them from dataStorage.
-	const loadSWReleaseAndIntegratorNames = () => {
+	const loadSWReleaseAndIntegratorNames = async () => {
 
 		const temp_swReleaseNames: Record<string, string> = {};
 		const temp_integratorNames: Record<string, string> = {};
@@ -105,8 +79,8 @@ export default function Main() {
 		for (const carline of carlines) {
 
 			// Load them from dataStorage
-			const swReleaseName = dataStorage.get(`swReleaseName:${slugify(carline)}`) ?? "";
-			const integratorName = dataStorage.get(`integratorName:${slugify(carline)}`) ?? "";
+			const swReleaseName = await (dataStorage.get(`swReleaseName:${slugify(carline)}`)) ?? "";
+			const integratorName = await (dataStorage.get(`integratorName:${slugify(carline)}`)) ?? "";
 
 			// Update the state variables
 			// This is to ensure the input boxes show the latest values from dataStorage.
@@ -127,25 +101,31 @@ export default function Main() {
 	// Rendered means converted from tsx to html. Render does not mean refresh/reload the page.
 	useEffect(() => {
 
-		loadProgress();
-		loadSWReleaseAndIntegratorNames();
+		(async () => {
+			await loadProgress();
+			await loadSWReleaseAndIntegratorNames();
+		})();
 
 		// Whenever there is a change in dataStorage from other tabs/windows...
 		const onStorage = (e: StorageEvent) => {
 
 			// If event key does not start with "swReleaseName:" or "integratorName:", ignore it.
-			if (!e.key?.startsWith("progress:") && !e.key?.startsWith("swReleaseName:") && !e.key?.startsWith("integratorName:")) return;
+			if (
+				!e.key?.startsWith("stageProgress:") && 
+				!e.key?.startsWith("swReleaseName:") && 
+				!e.key?.startsWith("integratorName:")
+			) return;
 
 			// Examples:
-			// From dataStorage -> progress:t-line-stage-1, carlineAndStageSlug = t-line-stage-1
+			// From dataStorage -> stageProgress:t-line-stage-1, carlineAndStageSlug = t-line-stage-1
 			// From dataStorage -> swReleaseName:t-line, carlineSlug = t-line
 			// From dataStorage -> integratorName:s-line, carlineSlug = s-line
-			const carlineAndStageSlug = e.key.replace(`progress:`, "");
+			const carlineAndStageSlug = e.key.replace(`stageProgress:`, "");
 			const keyType = e.key.startsWith("swReleaseName:") ? "swReleaseName" : "integratorName";
 			const carlineSlug = e.key.replace(`${keyType}:`, "");
 
 			// Set the appropriate state variable based on the key of the event.
-			if (e.key?.startsWith("progress:")) {
+			if (e.key?.startsWith("stageProgress:")) {
 				const carlineAndStageProgressVal = Number(e.newValue ?? "0");
 				setProgress((prev) => (
 					{
@@ -220,6 +200,7 @@ export default function Main() {
 												[slugify(carline)]: value,
 											}));
 											dataStorage.set(`swReleaseName:${slugify(carline)}`, value); // save instantly
+											localStorage.setItem(`swReleaseName:${slugify(carline)}`, value); // TEMP: trigger storage event
 										}}
 									/>
 								</label>
@@ -241,6 +222,7 @@ export default function Main() {
 												[slugify(carline)]: value,
 											}));
 											dataStorage.set(`integratorName:${slugify(carline)}`, value); // save instantly
+											localStorage.setItem(`integratorName:${slugify(carline)}`, value); // TEMP: trigger storage event
 										}}
 									/>
 								</label>
@@ -253,7 +235,7 @@ export default function Main() {
 								const stageSlug = slugify(stage.title);
 								const linkTo = `/checklist/${carlineSlug}/${stageSlug}`;
 
-								const progress_percentage = Number(dataStorage.get(`progress:${carlineSlug}-${stageSlug}`) ?? 0);
+								const progress_percentage = progress[`${carlineSlug}-${stageSlug}`];
 
 								return (
 									<td key={linkTo}>
@@ -282,8 +264,8 @@ export default function Main() {
 
 											// Clear all progress for this carline
 											for (const stage of stages) {
-												dataStorage.remove(`progress:${slugify(carline)}-${slugify(stage.title)}`);
-												dataStorage.remove(`checked:${slugify(carline)}-${slugify(stage.title)}`);
+												dataStorage.remove(`stageProgress:${slugify(carline)}-${slugify(stage.title)}`);
+												dataStorage.remove(`stageItemChecked:${slugify(carline)}-${slugify(stage.title)}`);
 											}
 
 											// Reload page

@@ -79,3 +79,20 @@ Setting up frontend
 10. After that, you can run 'npm run dev' to start the frontend server. It should be running on 'http://localhost:5173/', which you can open in a browser for testing.
 
 11. Now that you have a basic frontend setup, you can start developing your pages and components as needed!
+
+
+========================================= Lessons learnt =========================================
+
+- Use a common .ts file to store constants like backend URL, and functions to interact with backend API, so that it can be imported and used everywhere easily.
+
+- When specifying the backend URL in the frontend, use the method shown below, so that it works both in localhost and when hosted.
+
+	export const BACKEND = `${window.location.protocol}//${window.location.hostname}:4000`;
+
+- 'localStorage' can be used to trigger storage events across tabs, which can be useful for inter-tab communication.
+	It can also be used to persist data across page reloads and browser sessions.
+
+- The frontend talks to the backend using fetch API, which can be wrapped in functions for easier use.
+
+- In CSS, Flexbox can be used to evenly space items horizontally or vertically. It's a very useful layout tool. Learn more about it at https://css-tricks.com/snippets/css/a-guide-to-flexbox/.
+

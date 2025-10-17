@@ -33,7 +33,6 @@ yarn-error.log*
 #  System / Editor files
 # =============================
 .DS_Store
-Thumbs.db
 .vscode/
 .idea/
 
@@ -49,6 +48,13 @@ Thumbs.db
 # =============================
 coverage/
 *.tsbuildinfo
+
+# =============================
+#  Database files
+# =============================
+*.db
+*.db-shm
+*.db-wal
 
 # =============================
 #  Lock / local configuration files (optional)

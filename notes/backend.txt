@@ -83,3 +83,33 @@ Setting up the backend with Node.js, Express, and TypeScript.
     "start": "tsx src/server.ts"
 
     Now, instead of running 'npx tsx src/server.ts', we can just run 'npm start' to start the server.
+
+11. If everything works well so far, let's install the DB library - SQLite3. Run command 'npm i better-sqlite3' to install it.
+    better-sqlite3   - The SQLite3 library for Node.js. It allows us to use a lightweight database to store data.
+
+
+========================================= Lessons learnt =========================================
+
+- When hosting, make sure to enable the methods and headers in CORS that are needed.
+
+    app.use(cors(
+        {
+            origin: true,
+            credentials: true,
+            methods: ["GET", "PUT", "DELETE", "OPTIONS"],
+            allowedHeaders: ["Content-Type", "Authorization"]
+        }
+    ));
+
+- Do not use 'localhost' in 'app.listen' when hosting on LAN, use "0.0.0.0" instead. Otherwise, other devices on LAN cannot interact with the backend.
+
+    const PORT = 4000; // Backend running on this port, so we use this port with the address when testing on browser.
+
+    app.listen(PORT, "0.0.0.0", () => {
+        console.log(`Server is listening on http://0.0.0.0:${PORT}`);
+    });
+
+- Although we use 'db.ts', we import it as 'db.js' in 'server.ts', because after TypeScript compiles the .ts files, they become .js files.
+
+    import db from "./db.js";
+
