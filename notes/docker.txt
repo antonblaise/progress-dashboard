@@ -168,3 +168,10 @@ Tips:
 - Use Docker Desktop to manage images and containers via GUI.
 - The files/folders specified in .dockerignore are excluded when copying files into the Docker image, 
 	helping to reduce image size and improve build performance.
+
+
+========================================= Tools involved =========================================
+
+- Docker			- A platform that uses OS-level virtualization to deliver software in packages called containers.
+- Docker Compose	- A tool for defining and running multi-container Docker applications. It uses a YAML file to configure the application's services, networks, and volumes.
+- Nginx				- A web server that can also be used as a reverse proxy, load balancer, and HTTP cache. In this case, it serves the static files of the frontend app.
