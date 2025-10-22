@@ -201,6 +201,9 @@ export default function Main() {
 												...prev,
 												[slugify(carline)]: value,
 											}));
+										}}
+										onBlur={(e) => {
+											const value = e.target.value;
 											dataStorage.set(`swReleaseName:${slugify(carline)}`, value); // save instantly
 											localStorage.setItem(`swReleaseName:${slugify(carline)}`, value); // TEMP: trigger storage event
 										}}
@@ -223,6 +226,9 @@ export default function Main() {
 												...prev,
 												[slugify(carline)]: value,
 											}));
+										}}
+										onBlur={(e) => {
+											const value = e.target.value;
 											dataStorage.set(`integratorName:${slugify(carline)}`, value); // save instantly
 											localStorage.setItem(`integratorName:${slugify(carline)}`, value); // TEMP: trigger storage event
 										}}
