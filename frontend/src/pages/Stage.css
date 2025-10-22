@@ -48,6 +48,7 @@ h1 {
 
 .tickall-button {
     background-color: darkslategrey;
+    color: white;
     border: none;
     height: 3em;
     width: 10em;
@@ -59,6 +60,7 @@ h1 {
 
 .reset-button {
     background-color: darkslategrey;
+    color: white;
     border: none;
     height: 3em;
     width: 10em;

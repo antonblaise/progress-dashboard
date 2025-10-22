@@ -21,11 +21,7 @@ const stages = [
 	{ to: "/stage5", title: "Stage 5" },
 	{ to: "/stage6", title: "Stage 6" },
 	{ to: "/stage7", title: "Stage 7" },
-	{ to: "/stage8", title: "Stage 8" },
-	{ to: "/stage9", title: "Stage 9" },
-	{ to: "/stage10", title: "Stage 10" },
-	{ to: "/stage11", title: "Stage 11" },
-	{ to: "/stage12", title: "Stage 12" }
+	{ to: "/stage8", title: "Stage 8" }
 ];
 
 // Helper to slugify carline and stage (preserve dashes between words)
@@ -202,9 +198,9 @@ export default function Main() {
 												[slugify(carline)]: value,
 											}));
 										}}
-										onBlur={(e) => {
+										onBlur={async (e) => {
 											const value = e.target.value;
-											dataStorage.set(`swReleaseName:${slugify(carline)}`, value); // save instantly
+											await dataStorage.set(`swReleaseName:${slugify(carline)}`, value); // save instantly
 											localStorage.setItem(`swReleaseName:${slugify(carline)}`, value); // TEMP: trigger storage event
 										}}
 									/>
@@ -227,9 +223,9 @@ export default function Main() {
 												[slugify(carline)]: value,
 											}));
 										}}
-										onBlur={(e) => {
+										onBlur={async (e) => {
 											const value = e.target.value;
-											dataStorage.set(`integratorName:${slugify(carline)}`, value); // save instantly
+											await dataStorage.set(`integratorName:${slugify(carline)}`, value); // save instantly
 											localStorage.setItem(`integratorName:${slugify(carline)}`, value); // TEMP: trigger storage event
 										}}
 									/>
@@ -263,7 +259,7 @@ export default function Main() {
 								<div className="reset-buttons-column">
 									<button
 										title="Reset Buttons"
-										onClick={() => {
+										onClick={async () => {
 
 											// Prompt for confirmation
 											if (!window.confirm(`Are you sure you want to reset all progress for ${carline}? This action cannot be undone.`)) {
@@ -272,8 +268,8 @@ export default function Main() {
 
 											// Clear all progress for this carline
 											for (const stage of stages) {
-												dataStorage.remove(`stageProgress:${slugify(carline)}-${slugify(stage.title)}`);
-												dataStorage.remove(`stageItemChecked:${slugify(carline)}-${slugify(stage.title)}`);
+												await dataStorage.remove(`stageProgress:${slugify(carline)}-${slugify(stage.title)}`);
+												await dataStorage.remove(`stageItemChecked:${slugify(carline)}-${slugify(stage.title)}`);
 											}
 
 											// Reload page

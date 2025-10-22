@@ -7,4 +7,4 @@ if exist frontend\dist rmdir /s /q frontend\dist
 
 docker-compose down
 docker-compose build
-docker-compose up
+docker-compose up -d

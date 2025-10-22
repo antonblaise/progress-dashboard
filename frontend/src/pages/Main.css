@@ -108,6 +108,10 @@
     padding-right: 5em;
 }
 
+.reset-buttons-column button {
+    color: white;
+}
+
 .reset-buttons-column button:hover {
     background-color: red;
 }
