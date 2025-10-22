@@ -1,0 +1,19 @@
+services:
+    backend:
+        build: ./backend        # Build the backend image from the Dockerfile in ./backend.
+        container_name: app-backend     # Give a name to the container.
+        ports:
+            - "4000:4000"       # Map the port 4000 on the host to port 4000 in the container.
+        volumes:
+            - ./backend/db:/data     # Mounts the SQLite database file so data is saved even if the container restarts.
+        restart: unless-stopped     # Always restart the container unless it is explicitly stopped.
+
+    frontend:
+        build: ./frontend       # Build the frontend image from the Dockerfile in ./frontend.
+        container_name: app-frontend    # Give a name to the container.
+        ports:
+            - "5173:80"         # Map the port 5173 on the host to port 80 in the container.
+        depends_on:
+            - backend       # Ensure the backend starts before the frontend.
+        restart: unless-stopped     # Always restart the container unless it is explicitly stopped.
+        

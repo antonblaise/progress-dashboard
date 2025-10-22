@@ -52,10 +52,13 @@ app.get("/api/data/:key", (req, res) => {
             }
         );
     } else {
-        const row = db.prepare("SELECT value FROM dataStorage WHERE key = ?").get(key);
+        const value = db
+            .prepare("SELECT value FROM dataStorage WHERE key = ?")
+            .pluck()
+            .get(key) as string | undefined;
         res.json(
             {
-                value: row?.value ?? null
+                value: value ?? null
             }
         )
     }

@@ -1,0 +1,170 @@
+Using Docker Compose to containerise the project for deployment, so as to ensure consistency across different environments.
+
+0. Make sure Docker is installed. Check by running 'docker -v' in CMD. If not installed, download and install from https://www.docker.com/get-started/.
+
+1. In the root directory of the project (where 'frontend' and 'backend' folders are located), create a file named 'docker-compose.yml'.
+
+2. Inside both 'frontend' and 'backend' folders, create a file named 'Dockerfile'. No file extension.
+
+3. In backend/Dockerfile, write:
+
+	# ---------- BACKEND ----------
+	FROM node:20-alpine
+
+	WORKDIR /app
+	COPY package*.json ./
+	RUN npm ci
+	COPY . .
+
+	# build TS → JS if you use TypeScript
+	RUN npx tsc
+
+	EXPOSE 4000
+
+	CMD ["node", "dist/server.js"]
+
+	(Refer to the file itself for detailed explanations.)
+
+4. Then, in frontend/Dockerfile, write:
+
+	# ---------- FRONTEND ----------
+	FROM node:20-alpine AS build
+
+	WORKDIR /app
+	COPY package*.json ./
+	RUN npm ci
+	COPY . .
+	RUN npm run build
+
+	# Serve static files via nginx
+	FROM nginx:alpine
+	COPY --from=build /app/dist /usr/share/nginx/html
+	COPY default.conf /etc/nginx/conf.d/default.conf
+
+	# Expose port 80 inside container
+	EXPOSE 80
+
+	CMD ["nginx", "-g", "daemon off;"]
+
+	(Refer to the file itself for detailed explanations.)
+
+5. In 'frontend' folder, create a file named 'default.conf' with the following content to configure Nginx:
+
+	server {
+	    listen 80;
+	    server_name localhost;
+
+	    root /usr/share/nginx/html;
+	    index index.html;
+
+	    location / {
+	        try_files $uri $uri/ /index.html;
+	    }
+	}
+
+	So that Nginx serves the frontend app correctly, by redirecting all requests to index.html.
+	This prevents 404 errors when refreshing pages in a SPA (Single Page Application).
+
+6. (Recommended) Clean up 'node_modules', 'dist' folders and 'package-lock.json' files in both 'frontend' and 'backend' folders to reduce image size. You can delete them manually or run these commands in respective folders:
+
+	- In 'backend' folder:
+		rmdir /s /q node_modules
+		rmdir /s /q dist
+
+	- In 'frontend' folder:
+		rmdir /s /q node_modules
+		rmdir /s /q dist
+
+7. Create '.dockerignore' files in both 'frontend' and 'backend' folders to exclude unnecessary files from being copied into the Docker images. 
+	Add the following content to each '.dockerignore' file:
+
+	Backend:
+		node_modules
+		npm-debug.log
+		dist
+		*.db
+		*.db-shm
+		*.db-wal
+		.env
+	
+	Frontend:
+		node_modules
+		dist
+		npm-debug.log
+		.env
+
+8. 	(Optional) To test building the images individually, you can run the following commands in respective folders:
+	- In 'backend' folder: 'docker build -t app-backend .'
+	- In 'frontend' folder: 'docker build -t app-frontend .'
+
+9. (Optional) To run the built images individually for testing:
+	- In 'backend' folder: 'docker run -p 4000:4000 --name app-backend-test app-backend'
+	- In 'frontend' folder: 'docker run -p 5173:80 --name app-frontend-test app-frontend'
+	(Note: You may need to stop and remove the test containers after testing using 'docker stop <container_name>' and 'docker rm <container_name>')
+
+10. Now, in the project's root directory, create a file named 'docker-compose.yml', and write these.
+
+	services:
+		backend:
+			build: ./backend
+			container_name: app-backend
+			ports:
+				- "4000:4000"
+			volumes:
+				- ./backend/app.db:/app/app.db      # persist SQLite data
+			restart: unless-stopped
+
+		frontend:
+			build: ./frontend
+			container_name: app-frontend
+			ports:
+				-"5173:80"
+			depends_on:
+				- backend
+			restart: unless-stopped
+
+	(Refer to the file itself for detailed explanations.)
+
+11. There are several ways to start the app using Docker Compose.
+
+	a. Build + run
+
+		docker-compose up --build
+
+	b. Build only
+
+		docker-compose build
+
+	c. Run only (after building)
+
+		docker-compose up -d
+
+		*'-d' means to run the containers in background.
+
+	To check logs, run command 'docker-compose logs -f'.
+
+12. To stop the app, run command 'docker-compose down'.
+	It also deletes the containers, but keeps the images.
+
+13. Conditions for the app to be hosted and exposed on LAN:
+	- Ports are specified in 'docker-compose.yml', as such:
+		services:
+			backend:
+				ports:
+					- "4000:4000"    # hostPort:containerPort
+			frontend:
+				ports:
+					- "5173:80"        # hostPort:containerPort
+	- Backend CORS settings (in '/backend/src/server.ts') allow requests from frontend.
+		app.use(cors({ origin: true, credentials: true }));
+	- Frontend calls the right host, specified in '/frontend/src/utils/dataStorage.ts'.
+		export const BACKEND = `${window.location.protocol}//${window.location.hostname}:4000`;
+
+
+
+Tips:
+- A Docker image is a lightweight, standalone, executable package that includes everything needed to run a piece of software, 
+	including the code, runtime, libraries, environment variables, and config files.
+- Use Docker Desktop to manage images and containers via GUI.
+- The files/folders specified in .dockerignore are excluded when copying files into the Docker image, 
+	helping to reduce image size and improve build performance.
