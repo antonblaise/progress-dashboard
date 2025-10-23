@@ -2,7 +2,8 @@
 
 import { Link } from "react-router-dom";
 import { useEffect, useState } from "react";
-import { dataStorage } from "../utils/dataStorage";
+import { dataStorage } from "../lib/dataStorage";
+import { socket } from "../lib/socket";
 import "./Main.css"
 
 // Arrays to store the carlines and stages
@@ -98,58 +99,40 @@ export default function Main() {
 	// Mount means when the component is first rendered. 
 	// Rendered means converted from tsx to html. Render does not mean refresh/reload the page.
 	useEffect(() => {
-
+		// Initial data load
 		(async () => {
 			await loadProgress();
 			await loadSWReleaseAndIntegratorNames();
 		})();
 
-		// Whenever there is a change in dataStorage from other tabs/windows...
-		const onStorage = (e: StorageEvent) => {
-
-			// If event key does not start with "swReleaseName:" or "integratorName:", ignore it.
-			if (
-				!e.key?.startsWith("stageProgress:") && 
-				!e.key?.startsWith("swReleaseName:") && 
-				!e.key?.startsWith("integratorName:")
-			) return;
-
-			// Examples:
-			// From dataStorage -> stageProgress:t-line-stage-1, carlineAndStageSlug = t-line-stage-1
-			// From dataStorage -> swReleaseName:t-line, carlineSlug = t-line
-			// From dataStorage -> integratorName:s-line, carlineSlug = s-line
-			const carlineAndStageSlug = e.key.replace(`stageProgress:`, "");
-			const keyType = e.key.startsWith("swReleaseName:") ? "swReleaseName" : "integratorName";
-			const carlineSlug = e.key.replace(`${keyType}:`, "");
-
-			// Set the appropriate state variable based on the key of the event.
-			if (e.key?.startsWith("stageProgress:")) {
-				const carlineAndStageProgressVal = Number(e.newValue ?? "0");
-				setProgress((prev) => (
-					{
-						...prev,
-						[carlineAndStageSlug]: Number.isNaN(carlineAndStageProgressVal) ? 0 : carlineAndStageProgressVal
-					}
-				));
-			} else if (keyType === "swReleaseName") {
-				setSwReleaseNames((prev) => ({
+		// Listen for real-time updates from other clients
+		socket.on("dataChange", ({ key, value }) => {
+			if (key.startsWith("stageProgress:")) {
+				const slug = key.replace("stageProgress:", "");
+				const progressValue = Number(value) || 0;
+				setProgress(prev => ({
 					...prev,
-					[carlineSlug]: e.newValue ?? ""
+					[slug]: progressValue
 				}));
-			} else if (keyType === "integratorName") {
-				setIntegratorNames((prev) => ({
+			} else if (key.startsWith("swReleaseName:")) {
+				const slug = key.replace("swReleaseName:", "");
+				setSwReleaseNames(prev => ({
 					...prev,
-					[carlineSlug]: e.newValue ?? ""
+					[slug]: value || ""
 				}));
-			}  
+			} else if (key.startsWith("integratorName:")) {
+				const slug = key.replace("integratorName:", "");
+				setIntegratorNames(prev => ({
+					...prev,
+					[slug]: value || ""
+				}));
+			}
+		});
+
+		// Cleanup listener when component unmounts
+		return () => {
+			socket.off("dataChange");
 		};
-
-		// Listen to storage events.
-		window.addEventListener("storage", onStorage);
-
-		// Stop listening on exit.
-		return () => window.removeEventListener("storage", onStorage);
-
 	}, []);
 
 
@@ -200,8 +183,7 @@ export default function Main() {
 										}}
 										onBlur={async (e) => {
 											const value = e.target.value;
-											await dataStorage.set(`swReleaseName:${slugify(carline)}`, value); // save instantly
-											localStorage.setItem(`swReleaseName:${slugify(carline)}`, value); // TEMP: trigger storage event
+											await dataStorage.set(`swReleaseName:${slugify(carline)}`, value);
 										}}
 									/>
 								</label>
@@ -225,8 +207,7 @@ export default function Main() {
 										}}
 										onBlur={async (e) => {
 											const value = e.target.value;
-											await dataStorage.set(`integratorName:${slugify(carline)}`, value); // save instantly
-											localStorage.setItem(`integratorName:${slugify(carline)}`, value); // TEMP: trigger storage event
+											await dataStorage.set(`integratorName:${slugify(carline)}`, value);
 										}}
 									/>
 								</label>

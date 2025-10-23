@@ -80,8 +80,8 @@ Setting up frontend
 
 11. Now that you have a basic frontend setup, you can start developing your pages and components as needed!
 
-12. We are now going to install and implement Socket.io to enable real-time communication.
-	In 'frontend' folder, run command 'npm i socket.io-client @types/socket.io-client' to install Socket.io client and its TypeScript types.
+12. We are now going to install and implement Socket.IO to enable real-time communication.
+	In 'frontend' folder, run command 'npm i socket.io-client @types/socket.io-client' to install Socket.IO client and its TypeScript types.
     ** 'npm i' is same as 'npm install'
 
 

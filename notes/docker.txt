@@ -157,7 +157,7 @@ Using Docker Compose to containerise the project for deployment, so as to ensure
 					- "5173:80"        # hostPort:containerPort
 	- Backend CORS settings (in '/backend/src/server.ts') allow requests from frontend.
 		app.use(cors({ origin: true, credentials: true }));
-	- Frontend calls the right host, specified in '/frontend/src/utils/dataStorage.ts'.
+	- Frontend calls the right host, specified in '/frontend/src/lib/dataStorage.ts'.
 		export const BACKEND = `${window.location.protocol}//${window.location.hostname}:4000`;
 
 

@@ -1,0 +1,103 @@
+Using Socket.IO to enable real-time communication between clients and server.
+
+A. Backend
+
+npm i socket.io @types/socket.io
+
+
+server.ts:
+
+import { createServer } from "http"
+import { Server } from "socket.io"
+
+- Wrap the Express app in a HTTP server.
+const httpServer = createServer(app);
+
+- Socket.IO follows Express's CORS settings.
+const io = new Server(httpServer, {
+    cors: {
+        origin: true,
+        credentials: true,
+        methods: ["GET", "PUT", "DELETE", "OPTIONS"],
+        allowedHeaders: ["Content-Type", "Authorization"]
+    }
+});
+
+- Socket.IO event handlers.
+io.on("connection", (socket) => {
+    
+    console.log("Client connected.");
+
+    // Listen for data updates
+    socket.on("dataUpdate", async ({key, value}) => {
+
+        if (prefixAllowed(key)) {
+
+            // Update database
+            await db.prepare(`
+                INSERT INTO dataStorage (key, value, updated_at)
+                VALUES (?, ?, datetime('now'))
+                ON CONFLICT(key) DO UPDATE SET value=excluded.value, updated_at=datetime('now')
+            `).run(key, value);
+
+            // Broadcast to all other clients
+            socket.broadcast.emit(
+                "dataChange",
+                {key, value}
+            );
+
+        }
+
+    });
+
+    socket.on("disconnect", () => {
+        console.log("Client disconnected.")
+    });
+
+});
+
+- Use httpServer.listen instead of app.listen
+httpServer.listen(...);
+
+B. Frontend
+
+npm i socket.io-client @types/socket.io-client
+
+- In 'src' folder, create a folder named 'lib', and create a file named 'socket.ts' in it.
+
+import { io } from "socket.io-client";
+
+export const socket = io(
+    `${window.location.protocol}//${window.location.host}`,
+    {
+        withCredentials: true
+    }
+);
+
+socket.on("connect", () => {
+    console.log("Connected to server.")
+});
+
+socket.on("disconnect", () => {
+    console.log("Disconnected to server.")
+});
+
+- Update '/src/lib/dataStorage.ts'
+
+import { socket } from "../lib/socket";
+
+Do not export BACKEND anymore.
+
+In set() and remove(), we don't need to assign the fetch() result to a 'const res' anymore.
+So, also remove 'const json' and 'return json' lines in those methods.
+Replace those lines with these instead:
+
+For set():
+    socket.emit("dataUpdate", { key, value });
+
+For remove():
+    socket.emit("dataUpdate", { key, value: null });
+
+- Update '/src/pages/Main.tsx'
+
+import { socket } from "../lib/socket";

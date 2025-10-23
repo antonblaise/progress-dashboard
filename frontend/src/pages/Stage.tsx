@@ -2,7 +2,8 @@
 
 import { useParams } from "react-router-dom";
 import { useState, useEffect } from "react";
-import { dataStorage } from "../utils/dataStorage";
+import { dataStorage } from "../lib/dataStorage";
+import { socket } from "../lib/socket";
 import "./Stage.css";
 
 const checklist_statements = [
@@ -18,37 +19,54 @@ export default function Stage() {
 	// Read variables 'carline' and 'stage' from routed path (/:carline/:stage) in main.tsx.
 	const { carline, stage } = useParams();
 
-	// slug example: t-line-stage-1. Standard across tsx files.
-	const slug = `${carline}-${stage}`;
-
 	const [checked, setChecked] = useState<boolean[]>(
 		() => new Array(checklist_statements.length).fill(false)
 	);
 
 	useEffect(() => {
+        if (!socket.connected) {
+            console.log("Socket not connected, attempting to connect...");
+            socket.connect();
+        }
 
-		(async () => {
+        // Listen for real-time updates from other clients
+        const handleDataChange = ({ key, value }: { key: string, value: string | null }) => {
+            console.log("Received data update:", { key, value });
+            
+            if (key === `stageItemChecked:${carline}-${stage}` && value !== null) {
+                try {
+                    const checkedState = JSON.parse(value);
+                    console.log("Updating checked state:", checkedState);
+                    setChecked(checkedState);
+                } catch (err) {
+                    console.error("Error parsing checkedState:", err);
+                }
+            }
+        };
 
-			// Mechanism to prevent the checked boxes from being cleared upon page refresh, by reflecting what's saved in the memory.
-			// Read saved data of 'checked'
-			const saved_checked_raw = await dataStorage.get(`stageItemChecked:${slug}`);
-			if (!saved_checked_raw) return;
-	
-			try {
-				const saved_checked: boolean[] = JSON.parse(saved_checked_raw);
-	
-				// Match its length with checklist_statements' length to prevent error.
-				// Double (!) means to force convert it into boolean. Although in our case, it should already be boolean.
-				const normalised_checked = checklist_statements.map((_, i) => !!saved_checked[i]);
-				setChecked(normalised_checked);
-	
-			} catch {
-				// If data is corrupted, ignore and keep defaults.
-			}
+        console.log("Setting up Socket.IO listeners for:", `stageItemChecked:${carline}-${stage}`);
+        socket.on("dataUpdate", handleDataChange);
 
-		})();
+        // Load initial state
+        console.log("Loading initial state...");
+        dataStorage.get(`stageItemChecked:${carline}-${stage}`).then(value => {
+            console.log("Initial state loaded:", value);
+            if (value) {
+                try {
+                    const checkedState = JSON.parse(value);
+                    console.log("Setting initial checked state:", checkedState);
+                    setChecked(checkedState);
+                } catch (err) {
+                    console.error("Error parsing initial state:", err);
+                }
+            }
+        });
 
-	}, [slug])
+        return () => {
+            console.log("Cleaning up Socket.IO listeners");
+            socket.off("dataUpdate", handleDataChange);
+        };
+    }, [carline, stage])
 
 	return (
 		<div>
@@ -69,7 +87,6 @@ export default function Stage() {
 									title={item.text}
 
 									onChange={(e) => {
-
 										const next = [...checked];
 										next[index] = e.target.checked;
 										setChecked(next);
@@ -80,12 +97,7 @@ export default function Stage() {
 										const done = next.filter(Boolean).length;
 										const percentage = Math.round( (done / total) * 100 );
 
-										dataStorage.set(`stageProgress:${carline}-${stage}`, String(percentage))
-
-										// TEMP: keep localStorage writes to trigger Main’s onStorage listener
-										localStorage.setItem(`stageItemChecked:${carline}-${stage}`, JSON.stringify(next));
-										localStorage.setItem(`stageProgress:${carline}-${stage}`, String(percentage))
-
+										dataStorage.set(`stageProgress:${carline}-${stage}`, String(percentage));
 									}}
 								/>
 							</label>
@@ -113,11 +125,7 @@ export default function Stage() {
 						const done = Array(checklist_statements.length).fill(true);
 						dataStorage.set(`stageItemChecked:${carline}-${stage}`, JSON.stringify(done));
 						dataStorage.set(`stageProgress:${carline}-${stage}`, "100");
-						localStorage.setItem(`stageItemChecked:${carline}-${stage}`, JSON.stringify(done));
-						localStorage.setItem(`stageProgress:${carline}-${stage}`, "100");
-
-						// Reload page
-						window.location.reload();
+						setChecked(done);
 					}}
 				>Done</button>
 
@@ -129,11 +137,7 @@ export default function Stage() {
 						const reset = new Array(checklist_statements.length).fill(false);
 						dataStorage.set(`stageItemChecked:${carline}-${stage}`, JSON.stringify(reset));
 						dataStorage.set(`stageProgress:${carline}-${stage}`, "0");
-						localStorage.setItem(`stageItemChecked:${carline}-${stage}`, JSON.stringify(reset));
-						localStorage.setItem(`stageProgress:${carline}-${stage}`, "0");
-
-						// reload page
-						window.location.reload();
+						setChecked(reset);
 					}}
 				>Reset</button>
 			</div>

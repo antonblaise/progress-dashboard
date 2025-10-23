@@ -1,5 +1,7 @@
+import { socket } from "./socket";
+
 // The backend URL
-export const BACKEND = `${window.location.protocol}//${window.location.hostname}:4000`;
+const BACKEND = `${window.location.protocol}//${window.location.hostname}:4000`;
 
 // A storage variable to store all data, which will eventually be sent to the backend.
 export const dataStorage = {
@@ -16,7 +18,7 @@ export const dataStorage = {
 
 	async set(key: string, value: string): Promise<void> {
 		try {
-			const res = await fetch(
+			await fetch(
 				`${BACKEND}/api/data/${encodeURIComponent(key)}`,
 				{
 					method: "PUT",
@@ -26,8 +28,8 @@ export const dataStorage = {
 					body: JSON.stringify({ value })
 				}
 			);
-			const json = await res.json();
-			return json?.value ?? null; 
+			// Real-time Socket.IO update
+			socket.emit("dataUpdate", { key, value });
 		} catch {
 			// Ignore write errors
 		}
@@ -35,14 +37,14 @@ export const dataStorage = {
 
 	async remove(key: string): Promise<void> {
 		try {
-			const res = await fetch(
+			await fetch(
 				`${BACKEND}/api/data/${encodeURIComponent(key)}`,
 				{
 					method: "DELETE"
 				}
 			);
-			const json = await res.json();
-			return json?.value ?? null;
+            // Real-time Socket.IO update for deletion
+            socket.emit("dataUpdate", { key, value: null });
 		} catch {
 			// Ignore delete errors
 		}
