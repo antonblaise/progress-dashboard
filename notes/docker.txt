@@ -111,7 +111,7 @@ Using Docker Compose to containerise the project for deployment, so as to ensure
 			ports:
 				- "4000:4000"
 			volumes:
-				- ./backend/app.db:/app/app.db      # persist SQLite data
+				- ./backend/db:/data
 			restart: unless-stopped
 
 		frontend:
@@ -139,7 +139,7 @@ Using Docker Compose to containerise the project for deployment, so as to ensure
 
 		docker-compose up -d
 
-		*'-d' means to run the containers in background.
+		** '-d' means to run the containers in background.
 
 	To check logs, run command 'docker-compose logs -f'.
 
@@ -169,6 +169,14 @@ Tips:
 - The files/folders specified in .dockerignore are excluded when copying files into the Docker image, 
 	helping to reduce image size and improve build performance.
 
+========================================= Lessons learnt =========================================
+
+- By using Docker, we can ensure that the app runs in a consistent environment across different machines, making deployment and scaling easier.
+    This is because everytime we install something via npm, package*.json files are updated accordingly.
+    And when we rebuild the Docker containers, it will install the exact same versions of the packages as specified in package-lock.json via 'npm ci', ensuring consistency.
+    This prevents the need to use a manually maintained 'requirements' file like in Python.
+
+- Therefore, everytime a package is installed or removed, remember to rebuild the Docker images using 'docker-compose build' for the changes to take effect.
 
 ========================================= Tools involved =========================================
 

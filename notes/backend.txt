@@ -87,6 +87,51 @@ Setting up the backend with Node.js, Express, and TypeScript.
 11. If everything works well so far, let's install the DB library - SQLite3. Run command 'npm i better-sqlite3' to install it.
     better-sqlite3   - The SQLite3 library for Node.js. It allows us to use a lightweight database to store data.
 
+12. In 'src' folder, create 'db.ts' file to handle database operations. Write these in it:
+
+    import Database from "better-sqlite3";
+
+    // The 'data' folder is inside the Docker container, not the host machine.
+    const db = new Database("/data/progress-dashboard.db");
+
+    db.pragma("journal_mode = WAL");
+
+    db.exec(`
+        CREATE TABLE IF NOT EXISTS dataStorage (
+            key TEXT PRIMARY KEY,
+            value TEXT,
+            updated_at TEXT NOTE NULL DEFAULT (datetime('now'))  
+        );
+    `);
+
+    export default db;
+
+13. The "/data/progress-dashboard.db" is mounted from host machine to Docker container. 
+    This is done in 'docker-compose.yml'. Do refer to 'notes/docker.txt' and 'docker-compose.yml' for more information.
+
+14. Since 'db.ts' will be compiled to JavaScript, in 'server.ts', at the top, import it as 'db.js' like this:
+
+    import db from "./db.js";
+
+15. After that, in 'server.ts', in your APIs like get, post, put, delete, 
+    you can use the database with 'db.prepare(...)' to prepare SQL statements, 
+    and use '.get()', '.all()', '.run()' to execute them.
+
+    Examples:
+
+    db.prepare(...).get(...);   // To get a single row
+    db.prepare(...).all(...);   // To get multiple rows
+    db.prepare(...).run(...);   // To insert, update, delete rows
+
+16. We are now going to install and implement Socket.io to enable real-time communication.
+    In 'backend' folder, run command 'npm i socket.io @types/socket.io' to install Socket.io and its TypeScript types.
+    ** 'npm i' is same as 'npm install'
+
+
+    
+
+
+
 
 ========================================= Lessons learnt =========================================
 
