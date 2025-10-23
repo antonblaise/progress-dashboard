@@ -174,15 +174,14 @@ export default function Main() {
 										className="sw-release-name"
 										placeholder="Click to enter"
 										value={swReleaseNames[slugify(carline)] ?? ""} // show saved value
-										onChange={(e) => {
+										onChange={async (e) => {
 											const value = e.target.value;
+											// Update local state
 											setSwReleaseNames((prev) => ({
 												...prev,
 												[slugify(carline)]: value,
 											}));
-										}}
-										onBlur={async (e) => {
-											const value = e.target.value;
+											// Send to server immediately
 											await dataStorage.set(`swReleaseName:${slugify(carline)}`, value);
 										}}
 									/>
@@ -198,15 +197,14 @@ export default function Main() {
 										className="integrator-name"
 										placeholder="Click to enter"
 										value={integratorNames[slugify(carline)] ?? ""} // show saved value
-										onChange={(e) => {
+										onChange={async (e) => {
 											const value = e.target.value;
+											// Update local state
 											setIntegratorNames((prev) => ({
 												...prev,
 												[slugify(carline)]: value,
 											}));
-										}}
-										onBlur={async (e) => {
-											const value = e.target.value;
+											// Send to server immediately
 											await dataStorage.set(`integratorName:${slugify(carline)}`, value);
 										}}
 									/>
