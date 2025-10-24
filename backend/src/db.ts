@@ -1,7 +1,6 @@
 import Database from "better-sqlite3";
 
-// The 'data' folder is inside the Docker container, not the host machine.
-const db = new Database("/data/progress-dashboard.db");
+const db = new Database("db/progress-dashboard.db");
 
 db.pragma("journal_mode = WAL");
 

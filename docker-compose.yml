@@ -5,7 +5,7 @@ services:
         ports:
             - "4000:4000"       # Map the port 4000 on the host to port 4000 in the container.
         volumes:
-            - ./backend/db:/data     # Mounts the SQLite database file so data is saved even if the container restarts.
+            - ./backend/db:/db     # Mounts the SQLite database file so data is saved even if the container restarts.
         restart: unless-stopped     # Always restart the container unless it is explicitly stopped.
 
     frontend:
