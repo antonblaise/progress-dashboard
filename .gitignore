@@ -62,3 +62,8 @@ coverage/
 # Uncomment below if want to exclude local configs
 # frontend/package-lock.json
 # backend/package-lock.json
+
+# =============================
+#  Beyond Compare reports
+# =============================
+notes/BeyondCompare4_reports/
