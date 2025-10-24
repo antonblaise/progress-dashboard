@@ -93,7 +93,7 @@ Setting up frontend
 
 - When specifying the backend URL in the frontend, use the method shown below, so that it works both in localhost and when hosted.
 
-	export const BACKEND = `${window.location.protocol}//${window.location.hostname}:4000`;
+	const BACKEND = `${window.location.protocol}//${window.location.hostname}:4000`;
 
 - 'localStorage' can be used to trigger storage events across tabs, which can be useful for inter-tab communication.
 	It can also be used to persist data across page reloads and browser sessions.
@@ -111,3 +111,4 @@ Setting up frontend
 - Vite			- The build tool and development server for frontend.
 - React Router	- The routing library for React to handle navigation between pages.
 - TypeScript	- The programming language used, which is a superset of JavaScript with static typing.
+- Socket.IO		- A library for real-time web applications. It enables real-time, bidirectional communication between web clients and servers.

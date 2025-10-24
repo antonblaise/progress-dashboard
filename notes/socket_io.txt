@@ -1,103 +1,172 @@
 Using Socket.IO to enable real-time communication between clients and server.
 
-A. Backend
+----------------------- Backend -----------------------
 
-npm i socket.io @types/socket.io
+1. First, install Socket.IO packages in backend. Run command 'npm i socket.io @types/socket.io' in '/backend' folder.
+
+2. In 'backend/src/server.ts', make the following changes:
+
+    - Import necessary modules:
+        import { createServer } from "http"
+        import { Server } from "socket.io"
+
+    - Wrap the Express app in a HTTP server.
+        const httpServer = createServer(app);
+
+    - Socket.IO follows Express's CORS settings.
+        const io = new Server(httpServer, {
+            cors: {
+                origin: true,
+                credentials: true,
+                methods: ["GET", "PUT", "DELETE", "OPTIONS"],
+                allowedHeaders: ["Content-Type", "Authorization"]
+            }
+        });
+
+    - Create Socket.IO event handlers.
+        io.on("connection", (socket) => {
+            
+            console.log("Client connected.");
+
+            // Listen for data updates
+            socket.on("dataUpdate", async ({key, value}) => {
+
+                if (prefixAllowed(key)) {
+
+                    // Update database
+                    await db.prepare(`
+                        INSERT INTO dataStorage (key, value, updated_at)
+                        VALUES (?, ?, datetime('now'))
+                        ON CONFLICT(key) DO UPDATE SET value=excluded.value, updated_at=datetime('now')
+                    `).run(key, value);
+
+                    // Broadcast to all other clients
+                    socket.broadcast.emit(
+                        "dataChange",
+                        {key, value}
+                    );
+
+                }
+
+            });
+
+            socket.on("disconnect", () => {
+                console.log("Client disconnected.")
+            });
+
+        });
+
+    - Use httpServer.listen instead of app.listen
+        httpServer.listen(...);
 
 
-server.ts:
+----------------------- Frontend -----------------------
 
-import { createServer } from "http"
-import { Server } from "socket.io"
+1. First, install Socket.IO packages in frontend. Run command 'npm i socket.io-client @types/socket.io-client' in '/frontend' folder.
 
-- Wrap the Express app in a HTTP server.
-const httpServer = createServer(app);
+2. In 'src' folder, create a folder named 'lib' if it exist yet, and create a file named 'socket.ts' in it.
 
-- Socket.IO follows Express's CORS settings.
-const io = new Server(httpServer, {
-    cors: {
-        origin: true,
-        credentials: true,
-        methods: ["GET", "PUT", "DELETE", "OPTIONS"],
-        allowedHeaders: ["Content-Type", "Authorization"]
-    }
-});
+    import { io } from "socket.io-client";
 
-- Socket.IO event handlers.
-io.on("connection", (socket) => {
-    
-    console.log("Client connected.");
-
-    // Listen for data updates
-    socket.on("dataUpdate", async ({key, value}) => {
-
-        if (prefixAllowed(key)) {
-
-            // Update database
-            await db.prepare(`
-                INSERT INTO dataStorage (key, value, updated_at)
-                VALUES (?, ?, datetime('now'))
-                ON CONFLICT(key) DO UPDATE SET value=excluded.value, updated_at=datetime('now')
-            `).run(key, value);
-
-            // Broadcast to all other clients
-            socket.broadcast.emit(
-                "dataChange",
-                {key, value}
-            );
-
+    // Create a Socket.IO client instance
+    export const socket = io(
+        `${window.location.protocol}//${window.location.hostname}:4000`,
+        {
+            withCredentials: true,
+            transports: ['websocket', 'polling']
         }
+    );
 
+    // Create Socket.IO event listeners
+    socket.on("connect", () => {
+        console.log("Connected to Socket.IO server on port 4000");
     });
 
     socket.on("disconnect", () => {
-        console.log("Client disconnected.")
+        console.log("Disconnected from Socket.IO server");
     });
 
-});
+    socket.on("connect_error", (error) => {
+        console.error("Socket.IO connection error:", error);
+    });
 
-- Use httpServer.listen instead of app.listen
-httpServer.listen(...);
+    (Recommended) Put other helper TS scripts in this 'lib' folder as well, such as 'dataStorage.ts'.
 
-B. Frontend
+3. Update '/src/lib/dataStorage.ts' as such:
 
-npm i socket.io-client @types/socket.io-client
+    - Import socket:
+        import { socket } from "../lib/socket";
 
-- In 'src' folder, create a folder named 'lib', and create a file named 'socket.ts' in it.
+    - Do not export BACKEND anymore.
 
-import { io } from "socket.io-client";
+    - In set() and remove(), we don't need to assign the fetch() result to a 'const res' anymore.
+        So, also remove 'const json' and 'return json' lines in those methods.
+        Replace those lines with these instead:
 
-export const socket = io(
-    `${window.location.protocol}//${window.location.host}`,
-    {
-        withCredentials: true
-    }
-);
+    For set():
+        socket.emit("dataUpdate", { key, value });
 
-socket.on("connect", () => {
-    console.log("Connected to server.")
-});
+    For remove():
+        socket.emit("dataUpdate", { key, value: null });
 
-socket.on("disconnect", () => {
-    console.log("Disconnected to server.")
-});
+    No changes needed in get(), because it only fetches data from backend. It does not alter the db.
 
-- Update '/src/lib/dataStorage.ts'
+4. Update '/src/pages/Main.tsx' as such:
 
-import { socket } from "../lib/socket";
+    - Import socket:
+        import { socket } from "../lib/socket";
 
-Do not export BACKEND anymore.
+    - In useEffect(), change the event listener into using socket to listen for "dataChange" events:
 
-In set() and remove(), we don't need to assign the fetch() result to a 'const res' anymore.
-So, also remove 'const json' and 'return json' lines in those methods.
-Replace those lines with these instead:
+        useEffect(() => {
 
-For set():
-    socket.emit("dataUpdate", { key, value });
+            // Keep the initial data load as is. They run when the page loads.
 
-For remove():
-    socket.emit("dataUpdate", { key, value: null });
+            // Use Socket.IO's event listener to listen for "dataChange" events from server. It does so in real time!
+            socket.on("dataChange", ({ key, value }) => {
+                if (key.startsWith("stageProgress:")) {
+                    const slug = key.replace("stageProgress:", "");
+                    const progressValue = Number(value) || 0;
+                    setProgress(prev => ({
+                        ...prev,
+                        [slug]: progressValue
+                    }));
+                } else if (key.startsWith("swReleaseName:")) {
+                    const slug = key.replace("swReleaseName:", "");
+                    setSwReleaseNames(prev => ({
+                        ...prev,
+                        [slug]: value || ""
+                    }));
+                } else if (key.startsWith("integratorName:")) {
+                    const slug = key.replace("integratorName:", "");
+                    setIntegratorNames(prev => ({
+                        ...prev,
+                        [slug]: value || ""
+                    }));
+                }
+            });
 
-- Update '/src/pages/Main.tsx'
+            // Cleanup listener when component unmounts
+            return () => {
+                socket.off("dataChange");
+            };
 
-import { socket } from "../lib/socket";
+        }, []);
+
+
+
+
+========================================= Lessons learnt =========================================
+
+- Socket.IO makes it easy to implement real-time communication between clients and server.
+- socket.on() - to listen for events.
+- socket.emit() - to emit/broadcast events.
+- socket.off() - to remove event listeners. for cleanup purposes.
+- These are the events that Socket.IO can listen to using socket.on():
+    - connect     (built-in event when connection is established)
+    - disconnect  (built-in event when connection is lost)
+    - custom events defined by us, such as "dataChange" in this example.
+- A custom event is emitted using socket.emit("eventName", data).
+- Backend typically only needs 1 Socket.IO server instance. So we can just import io from 'socket.io' and use it directly.
+- As for frontend, we use a 'socket.ts' file to centralize the Socket.IO client instance and event listeners, so that it can be imported and used everywhere easily.
+    In this way, we don't have to create multiple socket connections in different components, which can lead to issues.
