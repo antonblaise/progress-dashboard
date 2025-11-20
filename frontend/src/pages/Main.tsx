@@ -4,7 +4,8 @@ import { Link } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { dataStorage } from "../lib/dataStorage";
 import { socket } from "../lib/socket";
-import "./Main.css"
+import "./Main.css";
+import { checklistMap } from "./Checklists";
 
 // Arrays to store the carlines and stages
 const carlines = [
@@ -14,16 +15,10 @@ const carlines = [
 	"RB Line"
 ];
 
-const stages = [
-	{ to: "/stage1", title: "Stage 1" },
-	{ to: "/stage2", title: "Stage 2" },
-	{ to: "/stage3", title: "Stage 3" },
-	{ to: "/stage4", title: "Stage 4" },
-	{ to: "/stage5", title: "Stage 5" },
-	{ to: "/stage6", title: "Stage 6" },
-	{ to: "/stage7", title: "Stage 7" },
-	{ to: "/stage8", title: "Stage 8" }
-];
+const stages = Object.keys(checklistMap).map(key => ({
+	to: `/${key}`,
+	title: `Stage ${key.replace(/[^0-9]/g, "") || key}` // or customize as needed
+}));
 
 // Helper to slugify carline and stage (preserve dashes between words)
 function slugify(str: string) {

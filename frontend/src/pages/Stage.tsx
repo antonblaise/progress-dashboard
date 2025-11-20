@@ -5,19 +5,14 @@ import { useState, useEffect } from "react";
 import { dataStorage } from "../lib/dataStorage";
 import { socket } from "../lib/socket";
 import "./Stage.css";
-
-const checklist_statements = [
-	{ text: "Example Checklist Item 1 - Google", url: "https://www.google.com" },
-	{ text: "Example Checklist Item 2 - Facebook", url: "https://www.facebook.com" },
-	{ text: "Example Checklist Item 3 - Wikipedia", url: "https://www.wikipedia.com" },
-	{ text: "Example Checklist Item 4 - YouTube", url: "https://www.youtube.com" }
-]
+import { checklistMap } from "./Checklists";
 
 // Stage() is a component
 export default function Stage() {
 
 	// Read variables 'carline' and 'stage' from routed path (/:carline/:stage) in main.tsx.
 	const { carline, stage } = useParams();
+	const checklist_statements = checklistMap[stage ?? ""] || [];
 
 	const [checked, setChecked] = useState<boolean[]>(
 		() => new Array(checklist_statements.length).fill(false)
