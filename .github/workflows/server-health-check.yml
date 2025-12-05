@@ -25,10 +25,10 @@ jobs:
         working-directory: frontend
 
       - name: Start backend
-        run: start /b cmd /c "cd backend && npm run dev"
+        run: cmd /c "cd backend && npm run dev"
       
       - name: Start frontend
-        run: start /b cmd /c "cd frontend && npm run dev"
+        run: cmd /c "cd frontend && npm run dev"
 
       - name: Wait for servers to start
         run: timeout /t 10
