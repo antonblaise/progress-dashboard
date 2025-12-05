@@ -9,6 +9,7 @@ import { checklistMap } from "./Checklists";
 
 // Arrays to store the carlines and stages
 const carlines = [
+	"U Line",
 	"T Line",
 	"S Line",
 	"S MOPF Line",
@@ -17,7 +18,7 @@ const carlines = [
 
 const stages = Object.keys(checklistMap).map(key => ({
 	to: `/${key}`,
-	title: `Stage ${key.replace(/[^0-9]/g, "") || key}` // or customize as needed
+	title: `${key.replace(/[^0-9]/g, "") || key}` // or customize as needed
 }));
 
 // Helper to slugify carline and stage (preserve dashes between words)

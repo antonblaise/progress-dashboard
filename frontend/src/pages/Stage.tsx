@@ -6,6 +6,7 @@ import { dataStorage } from "../lib/dataStorage";
 import { socket } from "../lib/socket";
 import "./Stage.css";
 import { checklistMap } from "./Checklists";
+import { useNavigate } from "react-router-dom";
 
 // Stage() is a component
 export default function Stage() {
@@ -14,9 +15,30 @@ export default function Stage() {
 	const { carline, stage } = useParams();
 	const checklist_statements = checklistMap[stage ?? ""] || [];
 
-	const [checked, setChecked] = useState<boolean[]>(
-		() => new Array(checklist_statements.length).fill(false)
-	);
+	const [checked, setChecked] = useState<boolean[]>(() => new Array(checklist_statements.length).fill(false));
+
+	// Reset checked state when stage or checklist_statements changes
+	useEffect(() => {
+		setChecked(new Array(checklist_statements.length).fill(false));
+	}, [stage, checklist_statements.length]);
+
+	const navigate = useNavigate();
+	const stages = Object.keys(checklistMap);
+	const currentStageIndex = stages.indexOf(stage ?? "");
+
+	// Navigation handlers
+	// Get route prefix from current path
+	const routePrefix = window.location.pathname.split('/').slice(1, -2).join('/');
+	const goToPrevStage = () => {
+		if (currentStageIndex > 0) {
+			navigate(`/${routePrefix}/${carline}/${stages[currentStageIndex - 1]}`);
+		}
+	};
+	const goToNextStage = () => {
+		if (currentStageIndex < stages.length - 1) {
+			navigate(`/${routePrefix}/${carline}/${stages[currentStageIndex + 1]}`);
+		}
+	};
 
 	useEffect(() => {
         if (!socket.connected) {
@@ -65,9 +87,23 @@ export default function Stage() {
 
 	return (
 		<div>
-			<h1>
-				{carline?.replace("-", " ").toUpperCase()} - {stage?.replace("-", " ").toUpperCase()}
-			</h1>
+			<div className="stage-header">
+				<button
+					className="stage-navigation-button"
+					onClick={goToPrevStage}
+					disabled={currentStageIndex <= 0}
+					title="Previous stage"
+				>&lt;</button>
+				<h1 className="stage-title">
+					{carline?.replace(/-/g, " ").toUpperCase()} - {stage?.replace(/-/g, " ").toUpperCase()}
+				</h1>
+				<button
+					className="stage-navigation-button"
+					onClick={goToNextStage}
+					disabled={currentStageIndex >= stages.length - 1}
+					title="Next stage"
+				>&gt;</button>
+			</div>
 
 			<div className="checklist">
 				
@@ -97,13 +133,17 @@ export default function Stage() {
 								/>
 							</label>
 
-							<a
-								href={item.url}
-								target="blank"
-								rel="noopener noreferrer"
-							>
-								{item.text}
-							</a>
+							{item.url ? (
+								<a
+									href={item.url}
+									target="blank"
+									rel="noopener noreferrer"
+								>
+									{item.text}
+								</a>
+							) : (
+								<span>{item.text}</span>
+							)}
 
 						</div>
 

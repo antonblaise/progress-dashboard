@@ -1,5 +1,48 @@
 @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
 
+/* Header styles for navigation buttons and title */
+.stage-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1em;
+    width: 100vw;
+    box-sizing: border-box;
+    padding: 0 2vw;
+}
+
+.stage-title {
+    margin: 0 auto;
+    color: orange;
+    text-align: center;
+    flex: 1;
+}
+
+.stage-navigation-button {
+    font-size: 1.5em;
+    background: none;
+    width: 5vw;
+    color: rgb(0, 255, 0);
+    cursor: pointer;
+    opacity: 1;
+    border: none;
+}
+
+.stage-navigation-button:hover {
+    color: red;
+}
+
+.stage-navigation-button:focus {
+    outline: none;
+    border: none;
+}
+
+.stage-navigation-button:disabled {
+    opacity: 0.3;
+    cursor: default;
+    color: rgb(0, 255, 0);
+}
+
 h1 {
     color: orange;
 }
@@ -14,20 +57,30 @@ h1 {
 .checklist {
     display: flex;
     flex-direction: column;
-    justify-content: center; /* centers the container horizontally */
-    align-items: flex-start;     /* centers vertically if you want */
+    justify-content: flex-start;
+    align-items: flex-start;
     padding-left: 5%;
     padding-top: 2%;
     line-height: 3;
+    text-align: left;
+    width: 90%;
+}
+
+.checklist-item {
+    text-align: left;
+    width: 100%;
 }
 
 .checklist a {
-    font-size: large;
     color: skyblue;
 }
 
 .checklist a:hover {
     color: blue;
+}
+
+.checklist span {
+    color: white;
 }
 
 .checklist-item input[type="checkbox"] {
