@@ -20,7 +20,6 @@ export const checklistMap: Record<string, { text: string; url: string }[]> = {
 		{ text: "Perform smoke test.", url: "" },
 		{ text: "Run Top 10 tests.", url: "" },
 		{ text: "If Top 10 tests are all passed, commit and push all changes in all repositories.", url: "" },
-		{ text: "Git clone mq-build-env, copy VU2_Delivery folder from mc_sw/Build_Env into it.", url: "" },
 	],
 	"mq-build-environment": [
 		{ text: "Git clone mq-build-env, create and checkout branch with name \"release/<release_version>_mb_mra2_19_immo\" and push it.", url: "" },
