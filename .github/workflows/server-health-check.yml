@@ -2,24 +2,35 @@ name: Server Health Check
 
 on:
   push:
-    branches:
-      - main
+    branches: [main]
   pull_request:
-    branches:
-      - main
+    branches: [main]
 
 jobs:
   test-servers:
     runs-on: windows-latest
-    steps:
-      - uses: actions/checkout@v6
 
+    steps:
+      - uses: actions/checkout@v4
+
+      # -------------------------
+      # Backend DB Setup
+      # -------------------------
       - name: Create backend db directory
-        run: cmd /c "mkdir backend\db"
+        run: mkdir backend\db
 
       - name: Create backend database file
-        run: cmd /c "type nul > backend\db\progress-dashboard.db"
+        run: type nul > backend\db\progress-dashboard.db
 
+      # -------------------------
+      # Install wait-on
+      # -------------------------
+      - name: Install wait-on
+        run: npm install -g wait-on
+
+      # -------------------------
+      # Install Dependencies
+      # -------------------------
       - name: Install backend dependencies
         run: npm ci
         working-directory: backend
@@ -28,6 +39,9 @@ jobs:
         run: npm ci
         working-directory: frontend
 
+      # -------------------------
+      # Build
+      # -------------------------
       - name: Build backend (TypeScript)
         run: npx tsc
         working-directory: backend
@@ -36,17 +50,35 @@ jobs:
         run: npm run build
         working-directory: frontend
 
+      # -------------------------
+      # Start Backend
+      # -------------------------
       - name: Start backend
-        run: cmd /c "cd backend && npm run dev"
+        run: |
+          cd backend
+          start /B npm start
+        shell: cmd
 
+      - name: Wait for backend
+        run: wait-on http://localhost:4000
+
+      # -------------------------
+      # Start Frontend (Vite Preview)
+      # -------------------------
       - name: Start frontend
-        run: cmd /c "cd frontend && npm run dev"
+        run: |
+          cd frontend
+          start /B npm run preview
+        shell: cmd
 
-      - name: Wait for servers to start
-        run: timeout /t 10
+      - name: Wait for frontend
+        run: wait-on http://localhost:5173
 
-      - name: Check backend health
-        run: curl --fail http://localhost:4000/ || exit 1
+      # -------------------------
+      # ✅ Basic Health Check Tests
+      # -------------------------
+      - name: Test backend API
+        run: curl http://localhost:4000
 
-      - name: Check frontend health
-        run: curl --fail http://localhost:5173/ || exit 1
+      - name: Test frontend
+        run: curl http://localhost:5173
