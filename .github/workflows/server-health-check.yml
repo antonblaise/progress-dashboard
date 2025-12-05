@@ -17,10 +17,10 @@ jobs:
       # Backend DB Setup
       # -------------------------
       - name: Create backend db directory
-        run: mkdir backend\db
+        run: cmd /c "mkdir backend\db"
 
       - name: Create backend database file
-        run: type nul > backend\db\progress-dashboard.db
+        run: cmd /c "type nul > backend\db\progress-dashboard.db"
 
       # -------------------------
       # Install wait-on
