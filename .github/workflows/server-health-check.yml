@@ -1,12 +1,24 @@
 name: Server Health Check
 
-on: [push, pull_request]
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
 
 jobs:
   test-servers:
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v6
+
+      - name: Create backend db directory
+        run: mkdir backend\db
+
+      - name: Create backend database file
+        run: type nul > backend\db\progress-dashboard.db
 
       - name: Install backend dependencies
         run: npm ci
@@ -16,17 +28,17 @@ jobs:
         run: npm ci
         working-directory: frontend
 
-      - name: Build backend
+      - name: Build backend (TypeScript)
         run: npx tsc
         working-directory: backend
 
-      - name: Build frontend
+      - name: Build frontend (Vite)
         run: npm run build
         working-directory: frontend
 
       - name: Start backend
         run: cmd /c "cd backend && npm run dev"
-      
+
       - name: Start frontend
         run: cmd /c "cd frontend && npm run dev"
 
@@ -38,9 +50,3 @@ jobs:
 
       - name: Check frontend health
         run: curl --fail http://localhost:5173/ || exit 1
-
-      - name: Kill backend
-        run: taskkill /IM node.exe /F
-
-      - name: Kill frontend
-        run: taskkill /IM node.exe /F
