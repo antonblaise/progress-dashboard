@@ -56,7 +56,7 @@ jobs:
       - name: Start backend
         run: |
           cd backend
-          start /B npm start
+          start /B node dist/index.js
         shell: cmd
 
       - name: Wait for backend
