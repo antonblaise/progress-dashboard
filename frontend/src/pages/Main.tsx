@@ -11,8 +11,8 @@ import { checklistMap } from "./Checklists";
 const carlines = [
 	"U Line",
 	"T Line",
-	"S Line",
 	"S MOPF Line",
+	"S Line",
 	"RB Line"
 ];
 
