@@ -3,6 +3,7 @@
 import { useParams } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { dataStorage } from "../lib/dataStorage";
+import { history } from "../lib/historyWriter";
 import { socket } from "../lib/socket";
 import "./Stage.css";
 import { checklistMap } from "./Checklists";
@@ -16,11 +17,27 @@ export default function Stage() {
 	const checklist_statements = checklistMap[stage ?? ""] || [];
 
 	const [checked, setChecked] = useState<boolean[]>(() => new Array(checklist_statements.length).fill(false));
+	const [stepTimestamps, setStepTimestamps] = useState<(string | null)[]>(() => new Array(checklist_statements.length).fill(null));
 
-	// Reset checked state when stage or checklist_statements changes
+	// Reset checked state and timestamps when stage or checklist_statements changes
 	useEffect(() => {
 		setChecked(new Array(checklist_statements.length).fill(false));
+		setStepTimestamps(new Array(checklist_statements.length).fill(null));
 	}, [stage, checklist_statements.length]);
+
+	// Load latest history timestamps for each step on mount or when carline/stage changes
+	useEffect(() => {
+		async function loadStepTimestamps() {
+			const newTimestamps: (string | null)[] = [];
+			for (let i = 0; i < checklist_statements.length; i++) {
+				const key = `history:${carline}:${stage}:step-${i}`;
+				const historyArr = await history.getHistory(key);
+				newTimestamps[i] = historyArr.length > 0 ? historyArr[0].updated_at : null;
+			}
+			setStepTimestamps(newTimestamps);
+		}
+		if (carline && stage) loadStepTimestamps();
+	}, [carline, stage, checklist_statements.length]);
 
 	const navigate = useNavigate();
 	const stages = Object.keys(checklistMap);
@@ -66,7 +83,7 @@ export default function Stage() {
 
         // Load initial state
         console.log("Loading initial state...");
-        dataStorage.get(`stageItemChecked:${carline}-${stage}`).then(value => {
+        dataStorage.getData(`stageItemChecked:${carline}-${stage}`).then(value => {
             console.log("Initial state loaded:", value);
             if (value) {
                 try {
@@ -106,49 +123,52 @@ export default function Stage() {
 			</div>
 
 			<div className="checklist">
-				
-					{checklist_statements.map( (item, index) => (
+				{checklist_statements.map((item, index) => (
+					<div key={index} className="checklist-item">
+						<p className="step-timestamp">
+							{stepTimestamps[index] ? stepTimestamps[index] : ""}
+						</p>
+						<label>
+							<input
+								type="checkbox"
+								checked={!!checked[index]}
+								title={item.text}
+								onChange={async (e) => {
 
-						<div key={index} className="checklist-item">
-
-							<label>
-								<input 
-									type="checkbox"
-									checked={!!checked[index]}
-									title={item.text}
-
-									onChange={(e) => {
-										const next = [...checked];
-										next[index] = e.target.checked;
-										setChecked(next);
-
-										dataStorage.set(`stageItemChecked:${carline}-${stage}`, JSON.stringify(next));
-
-										const total = checklist_statements.length || 1;
-										const done = next.filter(Boolean).length;
-										const percentage = Math.round( (done / total) * 100 );
-
-										dataStorage.set(`stageProgress:${carline}-${stage}`, String(percentage));
-									}}
-								/>
-							</label>
-
-							{item.url ? (
-								<a
-									href={item.url}
-									target="blank"
-									rel="noopener noreferrer"
-								>
-									{item.text}
-								</a>
-							) : (
-								<span>{item.text}</span>
-							)}
-
-						</div>
-
-					))}
-
+									const next = [...checked];
+									next[index] = e.target.checked;
+									setChecked(next);
+									
+									dataStorage.setData(`stageItemChecked:${carline}-${stage}`, JSON.stringify(next));
+									const total = checklist_statements.length || 1;
+									const done = next.filter(Boolean).length;
+									const percentage = Math.round((done / total) * 100);
+									dataStorage.setData(`stageProgress:${carline}-${stage}`, String(percentage));
+									
+									// Write to history
+									const historyKey = `history:${carline}:${stage}:step-${index}`;
+									await history.writeHistory(historyKey, String(e.target.checked));
+									// Update timestamp for this step
+									const historyArr = await history.getHistory(historyKey);
+									const newTimestamps = [...stepTimestamps];
+									newTimestamps[index] = historyArr.length > 0 ? historyArr[0].updated_at : null;
+									setStepTimestamps(newTimestamps);
+								}}
+							/>
+						</label>
+						{item.url ? (
+							<a
+								href={item.url}
+								target="blank"
+								rel="noopener noreferrer"
+							>
+								{item.text}
+							</a>
+						) : (
+							<span>{item.text}</span>
+						)}
+					</div>
+				))}
 			</div>
 
 			<div className="buttons">
@@ -156,11 +176,21 @@ export default function Stage() {
 				<button
 					title="Done"
 					className="tickall-button"
-					onClick={() => {
+					onClick={async () => {
 						const done = Array(checklist_statements.length).fill(true);
-						dataStorage.set(`stageItemChecked:${carline}-${stage}`, JSON.stringify(done));
-						dataStorage.set(`stageProgress:${carline}-${stage}`, "100");
+						dataStorage.setData(`stageItemChecked:${carline}-${stage}`, JSON.stringify(done));
+						dataStorage.setData(`stageProgress:${carline}-${stage}`, "100");
 						setChecked(done);
+
+						// Write to history for all steps
+						const newTimestamps = [...stepTimestamps];
+						for (let i = 0; i < checklist_statements.length; i++) {
+							const historyKey = `history:${carline}:${stage}:step-${i}`;
+							await history.writeHistory(historyKey, "true");
+							const historyArr = await history.getHistory(historyKey);
+							newTimestamps[i] = historyArr.length > 0 ? historyArr[0].updated_at : null;
+						}
+						setStepTimestamps(newTimestamps);
 					}}
 				>Done</button>
 
@@ -168,11 +198,21 @@ export default function Stage() {
 				<button
 					title="Reset"
 					className="reset-button"
-					onClick={() => {
+					onClick={async () => {
 						const reset = new Array(checklist_statements.length).fill(false);
-						dataStorage.set(`stageItemChecked:${carline}-${stage}`, JSON.stringify(reset));
-						dataStorage.set(`stageProgress:${carline}-${stage}`, "0");
+						dataStorage.setData(`stageItemChecked:${carline}-${stage}`, JSON.stringify(reset));
+						dataStorage.setData(`stageProgress:${carline}-${stage}`, "0");
 						setChecked(reset);
+
+						// Write to history for all steps
+						const newTimestamps = [...stepTimestamps];
+						for (let i = 0; i < checklist_statements.length; i++) {
+							const historyKey = `history:${carline}:${stage}:step-${i}`;
+							await history.writeHistory(historyKey, "false");
+							const historyArr = await history.getHistory(historyKey);
+							newTimestamps[i] = historyArr.length > 0 ? historyArr[0].updated_at : null;
+						}
+						setStepTimestamps(newTimestamps);
 					}}
 				>Reset</button>
 			</div>

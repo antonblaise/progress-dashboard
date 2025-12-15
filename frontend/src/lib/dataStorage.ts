@@ -6,7 +6,7 @@ const BACKEND = `${window.location.protocol}//${window.location.hostname}:4000`;
 // A storage variable to store all data, which will eventually be sent to the backend.
 export const dataStorage = {
 
-	async get(key: string): Promise<string | null> {
+	async getData(key: string): Promise<string | null> {
 		try {
 			const res = await fetch(`${BACKEND}/api/data/${encodeURIComponent(key)}`);
 			const json = await res.json();
@@ -16,7 +16,7 @@ export const dataStorage = {
 		}
 	},
 
-	async set(key: string, value: string): Promise<void> {
+	async setData(key: string, value: string): Promise<void> {
 		try {
 			await fetch(
 				`${BACKEND}/api/data/${encodeURIComponent(key)}`,
@@ -35,7 +35,7 @@ export const dataStorage = {
 		}
 	},
 
-	async remove(key: string): Promise<void> {
+	async removeData(key: string): Promise<void> {
 		try {
 			await fetch(
 				`${BACKEND}/api/data/${encodeURIComponent(key)}`,

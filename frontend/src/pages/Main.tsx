@@ -47,7 +47,7 @@ export default function Main() {
 		const allProgress: Record<string, number> = {};
 		for (const carline of carlines) {
 			for (const stage of stages) {
-				const raw = await dataStorage.get(`stageProgress:${slugify(carline)}-${slugify(stage.title)}`);
+				const raw = await dataStorage.getData(`stageProgress:${slugify(carline)}-${slugify(stage.title)}`);
 				const val = Number(raw ?? "0");
 				allProgress[`${slugify(carline)}-${slugify(stage.title)}`] = Number.isFinite(val) ? val : 0;
 			}
@@ -74,8 +74,8 @@ export default function Main() {
 		for (const carline of carlines) {
 
 			// Load them from dataStorage
-			const swReleaseName = await (dataStorage.get(`swReleaseName:${slugify(carline)}`)) ?? "";
-			const integratorName = await (dataStorage.get(`integratorName:${slugify(carline)}`)) ?? "";
+			const swReleaseName = await (dataStorage.getData(`swReleaseName:${slugify(carline)}`)) ?? "";
+			const integratorName = await (dataStorage.getData(`integratorName:${slugify(carline)}`)) ?? "";
 
 			// Update the state variables
 			// This is to ensure the input boxes show the latest values from dataStorage.
@@ -178,7 +178,7 @@ export default function Main() {
 												[slugify(carline)]: value,
 											}));
 											// Send to server immediately
-											await dataStorage.set(`swReleaseName:${slugify(carline)}`, value);
+											await dataStorage.setData(`swReleaseName:${slugify(carline)}`, value);
 										}}
 									/>
 								</label>
@@ -201,7 +201,7 @@ export default function Main() {
 												[slugify(carline)]: value,
 											}));
 											// Send to server immediately
-											await dataStorage.set(`integratorName:${slugify(carline)}`, value);
+											await dataStorage.setData(`integratorName:${slugify(carline)}`, value);
 										}}
 									/>
 								</label>
@@ -243,8 +243,8 @@ export default function Main() {
 
 											// Clear all progress for this carline
 											for (const stage of stages) {
-												await dataStorage.remove(`stageProgress:${slugify(carline)}-${slugify(stage.title)}`);
-												await dataStorage.remove(`stageItemChecked:${slugify(carline)}-${slugify(stage.title)}`);
+												await dataStorage.removeData(`stageProgress:${slugify(carline)}-${slugify(stage.title)}`);
+												await dataStorage.removeData(`stageItemChecked:${slugify(carline)}-${slugify(stage.title)}`);
 											}
 
 											// Reload page

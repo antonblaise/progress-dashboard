@@ -1,15 +1,29 @@
 import Database from "better-sqlite3";
 
-const db = new Database("db/progress-dashboard.db");
+// DB to store the real-time data to be reflected across all clients
+const progress_dashboard_db = new Database("db/progress-dashboard.db");
 
-db.pragma("journal_mode = WAL");
+progress_dashboard_db.pragma("journal_mode = WAL");
 
-db.exec(`
+progress_dashboard_db.exec(`
     CREATE TABLE IF NOT EXISTS dataStorage (
         key TEXT PRIMARY KEY,
         value TEXT,
-        updated_at TEXT NOTE NULL DEFAULT (datetime('now'))  
+        updated_at TEXT DEFAULT (strftime('%Y-%m-%d %H:%M:%S', 'now'))
     );
 `);
 
-export default db;
+// DB to store historical changes
+const history_db = new Database("db/history.db");
+
+history_db.pragma("journal_mode = WAL");
+
+history_db.exec(`
+    CREATE TABLE IF NOT EXISTS history (
+        key TEXT,
+        value TEXT,
+        updated_at TEXT DEFAULT (strftime('%Y-%m-%d %H:%M:%S', 'now'))
+    );
+`);
+
+export { progress_dashboard_db, history_db };

@@ -1,7 +1,7 @@
 import express from "express"
 import cookieParser from "cookie-parser"
 import cors from "cors"
-import db from "./db.js";
+import { progress_dashboard_db, history_db } from "./db";
 import { createServer } from "http";
 import { Server } from "socket.io";
 
@@ -10,7 +10,8 @@ const ALLOWED_PREFIXES = [
     "integratorName:",
     "swReleaseName:",
     "stageProgress:",
-    "stageItemChecked:"
+    "stageItemChecked:",
+    "history:",
 ]
 
 function prefixAllowed(key: string) {
@@ -62,15 +63,36 @@ io.on("connection", (socket) => {
         if (prefixAllowed(key)) {
 
             // Update database
-            await db.prepare(`
+            await progress_dashboard_db.prepare(`
                 INSERT INTO dataStorage (key, value, updated_at)
-                VALUES (?, ?, datetime('now'))
+                VALUES (?, ?, datetime('now', '+8 hours'))
                 ON CONFLICT(key) DO UPDATE SET value=excluded.value, updated_at=datetime('now')
             `).run(key, value);
 
             // Broadcast to all other clients
             socket.broadcast.emit(
                 "dataChange",
+                {key, value}
+            );
+
+        }
+
+    });
+
+    // Listen to history writes
+    socket.on("historyWrite", async ({key, value}) => {
+
+        if (prefixAllowed(key)) {
+
+            // Update history database
+            await history_db.prepare(`
+                INSERT INTO history (key, value, updated_at)
+                VALUES (?, ?, datetime('now', '+8 hours'))
+            `).run(key, value);
+
+            // Broadcast to all other clients
+            socket.broadcast.emit(
+                "historyAdded",
                 {key, value}
             );
 
@@ -99,6 +121,8 @@ app.get("/", (_req, res) => {
     res.send("✅ Backend is running successfully!");
 });
 
+// --- Data Storage Endpoints --- //
+
 // GET value
 // Read data from an API endpoint.
 app.get("/api/data/:key", (req, res) => {
@@ -112,7 +136,7 @@ app.get("/api/data/:key", (req, res) => {
             }
         );
     } else {
-        const value = db
+        const value = progress_dashboard_db
             .prepare("SELECT value FROM dataStorage WHERE key = ?")
             .pluck()
             .get(key) as string | undefined;
@@ -139,9 +163,9 @@ app.put("/api/data/:key", (req, res) => {
         )
     } else {
         const value = String(req.body?.value ?? "");
-        db.prepare(`
+        progress_dashboard_db.prepare(`
             INSERT INTO dataStorage (key, value, updated_at)
-            VALUES (?, ?, datetime('now'))
+            VALUES (?, ?, datetime('now', '+8 hours'))
             ON CONFLICT(key) DO UPDATE SET value=excluded.value, updated_at=datetime('now')
         `).run(key, value);
         res.json(
@@ -166,7 +190,7 @@ app.delete("/api/data/:key", (req, res) => {
             }
         );
     } else {
-        db.prepare("DELETE FROM dataStorage WHERE key = ?").run(key);
+        progress_dashboard_db.prepare("DELETE FROM dataStorage WHERE key = ?").run(key);
         res.json(
             {
                 ok: true,
@@ -175,3 +199,59 @@ app.delete("/api/data/:key", (req, res) => {
     }
 
 });
+
+// --- History Endpoints --- //
+
+// GET history
+// Read a specific entry's history from an API endpoint.
+
+app.get("/api/history/:key", (req, res) => {
+
+    const key = req.params.key;
+
+    if (!prefixAllowed(key)) {
+        return res.status(400).json(
+            {
+                error: "Unknown key"
+            }
+        );
+    } else {
+        const history = history_db
+            .prepare("SELECT value, updated_at FROM history WHERE key = ? ORDER BY updated_at DESC")
+            .all(key) as { value: string, updated_at: string }[];
+        res.json(
+            {
+                history: history
+            }
+        )
+    }
+
+});
+
+// POST history
+// Add a new entry to an entry's history from an API endpoint.
+app.post("/api/history/:key", (req, res) => {
+
+    const key = req.params.key;
+
+    if (!prefixAllowed(key)) {
+        return res.status(400).json(
+            {
+                error: "Unknown key"
+            }
+        );
+    } else {
+        const value = String(req.body?.value ?? "");
+        history_db.prepare(`
+            INSERT INTO history (key, value, updated_at)
+            VALUES (?, ?, datetime('now', '+8 hours'))
+        `).run(key, value);
+        res.json(
+            {
+                ok: true
+            }
+        );
+    }
+
+});
+

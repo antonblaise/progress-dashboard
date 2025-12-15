@@ -11,6 +11,10 @@ if not exist progress-dashboard.db (
     type nul > progress-dashboard.db
     echo done creating backend/db/progress-dashboard.db
 )
+if not exist history.db (
+    type nul > history.db
+    echo done creating backend/db/history.db
+)
 
 cd ../..
 
