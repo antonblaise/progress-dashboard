@@ -54,16 +54,39 @@ h1 {
     font-family: "Press Start 2P";
 }
 
-.checklist {
-    display: flex;
-    flex-direction: column;
-    justify-content: flex-start;
-    align-items: flex-start;
-    padding-left: 5%;
-    padding-top: 2%;
-    line-height: 3;
-    text-align: left;
+
+.checklist-table {
     width: 90%;
+    margin-left: 5%;
+    margin-top: 2%;
+    border-collapse: collapse;
+    font-family: inherit;
+}
+
+.checklist-table td {
+    border: none;
+    padding: 1%;
+    vertical-align: middle;
+    background: none;
+}
+
+.checklist-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5em;
+    text-align: left;
+}
+
+.step-timestamp {
+    display: inline-block;
+    color: rgb(125, 125, 125);
+    font-size: x-small;
+    margin-right: 0.5em;
+    text-align: right;
+    opacity: 0;
+}
+.step-timestamp-checked {
+    opacity: 1 !important;
 }
 
 .checklist-item {
@@ -71,15 +94,15 @@ h1 {
     width: 100%;
 }
 
-.checklist a {
+.checklist-item a {
     color: skyblue;
 }
 
-.checklist a:hover {
+.checklist-item a:hover {
     color: blue;
 }
 
-.checklist span {
+.checklist-item span {
     color: white;
 }
 

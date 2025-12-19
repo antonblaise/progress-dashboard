@@ -122,54 +122,61 @@ export default function Stage() {
 				>&gt;</button>
 			</div>
 
-			<div className="checklist">
-				{checklist_statements.map((item, index) => (
-					<div key={index} className="checklist-item">
-						<p className="step-timestamp">
-							{stepTimestamps[index] ? stepTimestamps[index] : ""}
-						</p>
-						<label>
-							<input
-								type="checkbox"
-								checked={!!checked[index]}
-								title={item.text}
-								onChange={async (e) => {
-
-									const next = [...checked];
-									next[index] = e.target.checked;
-									setChecked(next);
-									
-									dataStorage.setData(`stageItemChecked:${carline}-${stage}`, JSON.stringify(next));
-									const total = checklist_statements.length || 1;
-									const done = next.filter(Boolean).length;
-									const percentage = Math.round((done / total) * 100);
-									dataStorage.setData(`stageProgress:${carline}-${stage}`, String(percentage));
-									
-									// Write to history
-									const historyKey = `history:${carline}:${stage}:step-${index}`;
-									await history.writeHistory(historyKey, String(e.target.checked));
-									// Update timestamp for this step
-									const historyArr = await history.getHistory(historyKey);
-									const newTimestamps = [...stepTimestamps];
-									newTimestamps[index] = historyArr.length > 0 ? historyArr[0].updated_at : null;
-									setStepTimestamps(newTimestamps);
-								}}
-							/>
-						</label>
-						{item.url ? (
-							<a
-								href={item.url}
-								target="blank"
-								rel="noopener noreferrer"
-							>
-								{item.text}
-							</a>
-						) : (
-							<span>{item.text}</span>
-						)}
-					</div>
-				))}
-			</div>
+			<table className="checklist-table">
+				<tbody>
+					{checklist_statements.map((item, index) => (
+						<tr key={index}>
+							<td style={{ width: '160px', textAlign: 'right' }}>
+								<p
+									className={`step-timestamp${checked[index] ? ' step-timestamp-checked' : ''}`}
+								>
+									{stepTimestamps[index] ? stepTimestamps[index] : ""}
+								</p>
+							</td>
+							<td>
+								<div className="checklist-item">
+									<label>
+										<input
+											type="checkbox"
+											checked={!!checked[index]}
+											title={item.text}
+											onChange={async (e) => {
+												const next = [...checked];
+												next[index] = e.target.checked;
+												setChecked(next);
+												dataStorage.setData(`stageItemChecked:${carline}-${stage}`, JSON.stringify(next));
+												const total = checklist_statements.length || 1;
+												const done = next.filter(Boolean).length;
+												const percentage = Math.round((done / total) * 100);
+												dataStorage.setData(`stageProgress:${carline}-${stage}`, String(percentage));
+												// Write to history
+												const historyKey = `history:${carline}:${stage}:step-${index}`;
+												await history.writeHistory(historyKey, String(e.target.checked));
+												// Update timestamp for this step
+												const historyArr = await history.getHistory(historyKey);
+												const newTimestamps = [...stepTimestamps];
+												newTimestamps[index] = historyArr.length > 0 ? historyArr[0].updated_at : null;
+												setStepTimestamps(newTimestamps);
+											}}
+										/>
+									</label>
+									{item.url ? (
+										<a
+											href={item.url}
+											target="blank"
+											rel="noopener noreferrer"
+										>
+											{item.text}
+										</a>
+									) : (
+										<span>{item.text}</span>
+									)}
+								</div>
+							</td>
+						</tr>
+					))}
+				</tbody>
+			</table>
 
 			<div className="buttons">
 				{/* Done */}
