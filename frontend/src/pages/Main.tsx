@@ -43,16 +43,40 @@ export default function Main() {
 	// 2. helper to load all progress from dataStorage
 	// Number() means to convert any number string to a number type.
 	// If the string is not a valid number, it returns NaN (Not a Number)
+	const [latestTimestamps, setLatestTimestamps] = useState<Record<string, string>>({});
+
 	const loadProgress = async () => {
 		const allProgress: Record<string, number> = {};
+		const allTimestamps: Record<string, string> = {};
 		for (const carline of carlines) {
 			for (const stage of stages) {
-				const raw = await dataStorage.getData(`stageProgress:${slugify(carline)}-${slugify(stage.title)}`);
+				const key = `${slugify(carline)}-${slugify(stage.title)}`;
+				const raw = await dataStorage.getData(`stageProgress:${key}`);
 				const val = Number(raw ?? "0");
-				allProgress[`${slugify(carline)}-${slugify(stage.title)}`] = Number.isFinite(val) ? val : 0;
+				allProgress[key] = Number.isFinite(val) ? val : 0;
+
+				// Get latest ticked timestamp
+				const checklist = checklistMap[stage.title] || [];
+				let latest = "";
+				for (let i = checklist.length - 1; i >= 0; i--) {
+					const checkedRaw = await dataStorage.getData(`stageItemChecked:${key}`);
+					let checkedArr: boolean[] = [];
+					try {
+						checkedArr = JSON.parse(checkedRaw ?? "[]");
+					} catch {}
+					if (checkedArr[i]) {
+						const historyArr = await (await import("../lib/historyWriter")).history.getHistory(`history:${slugify(carline)}:${slugify(stage.title)}:step-${i}`);
+						if (historyArr.length > 0 && historyArr[0].updated_at) {
+							latest = historyArr[0].updated_at;
+							break;
+						}
+					}
+				}
+				allTimestamps[key] = latest;
 			}
 		}
 		setProgress(allProgress);
+		setLatestTimestamps(allTimestamps);
 	};
 
 	// ############################################################################################ //
@@ -219,9 +243,14 @@ export default function Main() {
 								return (
 									<td key={linkTo}>
 										<Link to={linkTo} className="box-link" title={carline + " - " + stage.title}>
-											<div className="box">
-												<div className="box-fill" style={{ width: `${progress_percentage}%` }} />
-												<span className="box-progress-text">{progress_percentage}%</span>
+											<div className="box-container">
+												<div className="box">
+													<div className="box-fill" style={{ width: `${progress_percentage}%` }} />
+													<span className="box-progress-text">{progress_percentage}%</span>
+												</div>
+												<div className="box-timestamp">
+													{latestTimestamps[`${carlineSlug}-${stageSlug}`] || ""}
+												</div>
 											</div>
 										</Link>
 									</td>
