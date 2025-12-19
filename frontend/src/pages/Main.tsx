@@ -2,8 +2,10 @@
 
 import { Link } from "react-router-dom";
 import { useEffect, useState } from "react";
+
 import { dataStorage } from "../lib/dataStorage";
 import { socket } from "../lib/socket";
+import { history } from "../lib/historyWriter";
 import "./Main.css";
 import { checklistMap } from "./Checklists";
 
@@ -65,7 +67,7 @@ export default function Main() {
 						checkedArr = JSON.parse(checkedRaw ?? "[]");
 					} catch {}
 					if (checkedArr[i]) {
-						const historyArr = await (await import("../lib/historyWriter")).history.getHistory(`history:${slugify(carline)}:${slugify(stage.title)}:step-${i}`);
+						const historyArr = await history.getHistory(`history:${slugify(carline)}:${slugify(stage.title)}:step-${i}`);
 						if (historyArr.length > 0 && historyArr[0].updated_at) {
 							latest = historyArr[0].updated_at;
 							break;
