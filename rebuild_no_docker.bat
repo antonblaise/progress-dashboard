@@ -1,6 +1,6 @@
 @echo off
 
-:: Create the database file if not exist
+:: Create the database files if not exist
 cd backend
 if not exist db (
     mkdir db
