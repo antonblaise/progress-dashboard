@@ -15,7 +15,9 @@ const carlines = [
 	"T Line",
 	"S MOPF Line",
 	"S Line",
-	"RB Line"
+	"RB Line",
+	"V Line",
+	"X Line"
 ];
 
 const stages = Object.keys(checklistMap).map(key => ({
