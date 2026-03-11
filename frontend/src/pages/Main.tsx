@@ -117,13 +117,17 @@ export default function Main() {
 		})();
 
 		// Listen for real-time updates from other clients
-		socket.on("dataChange", ({ key, value }) => {
+		socket.on("dataChange", ({ key, value, updated_at }) => {
 			if (key.startsWith("stageProgress:")) {
 				const slug = key.replace("stageProgress:", "");
 				const progressValue = Number(value) || 0;
 				setProgress(prev => ({
 					...prev,
 					[slug]: progressValue
+				}));
+				setLatestTimestamps(prev => ({
+					...prev,
+					[slug]: updated_at || ""
 				}));
 			} else if (key.startsWith("swReleaseName:")) {
 				const slug = key.replace("swReleaseName:", "");
