@@ -18,6 +18,18 @@ function prefixAllowed(key: string) {
     return ALLOWED_PREFIXES.some(prefix => key.startsWith(prefix));
 }
 
+// Helper function to format timestamp as YYYY-MM-dd HH:mm:ss in GMT+8
+function getFormattedTimestamp(): string {
+    const date = new Date(Date.now() + 8 * 60 * 60 * 1000);
+    const year = date.getUTCFullYear();
+    const month = String(date.getUTCMonth() + 1).padStart(2, '0');
+    const day = String(date.getUTCDate()).padStart(2, '0');
+    const hours = String(date.getUTCHours()).padStart(2, '0');
+    const minutes = String(date.getUTCMinutes()).padStart(2, '0');
+    const seconds = String(date.getUTCSeconds()).padStart(2, '0');
+    return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+}
+
 // Create an Express app and a HTTP server to wrap it.
 // Client Request → HTTP Server → Express App → Routes
 //               ↑               ↑             ↑
@@ -63,16 +75,23 @@ io.on("connection", (socket) => {
         if (prefixAllowed(key)) {
 
             // Update database
+            const timestamp = getFormattedTimestamp();
             await progress_dashboard_db.prepare(`
                 INSERT INTO dataStorage (key, value, updated_at)
-                VALUES (?, ?, datetime('now', '+8 hours'))
-                ON CONFLICT(key) DO UPDATE SET value=excluded.value, updated_at=datetime('now')
-            `).run(key, value);
+                VALUES (?, ?, ?)
+                ON CONFLICT(key) DO UPDATE SET value=excluded.value, updated_at=excluded.updated_at
+            `).run(key, value, timestamp);
+
+            // Retrieve the stored timestamp to broadcast
+            const row = progress_dashboard_db
+                .prepare("SELECT updated_at FROM dataStorage WHERE key = ?")
+                .get(key) as { updated_at?: string } | undefined;
+            const updated_at = row?.updated_at ?? "";
 
             // Broadcast to all other clients
             socket.broadcast.emit(
                 "dataChange",
-                {key, value}
+                {key, value, updated_at}
             );
 
         }
@@ -85,10 +104,11 @@ io.on("connection", (socket) => {
         if (prefixAllowed(key)) {
 
             // Update history database
+            const timestamp = getFormattedTimestamp();
             await history_db.prepare(`
                 INSERT INTO history (key, value, updated_at)
-                VALUES (?, ?, datetime('now', '+8 hours'))
-            `).run(key, value);
+                VALUES (?, ?, ?)
+            `).run(key, value, timestamp);
 
             // Broadcast to all other clients
             socket.broadcast.emit(
@@ -136,13 +156,13 @@ app.get("/api/data/:key", (req, res) => {
             }
         );
     } else {
-        const value = progress_dashboard_db
-            .prepare("SELECT value FROM dataStorage WHERE key = ?")
-            .pluck()
-            .get(key) as string | undefined;
+        const row = progress_dashboard_db
+            .prepare("SELECT value, updated_at FROM dataStorage WHERE key = ?")
+            .get(key) as { value?: string, updated_at?: string } | undefined;
         res.json(
             {
-                value: value ?? null
+                value: row?.value ?? null,
+                updated_at: row?.updated_at ?? null
             }
         )
     }
@@ -163,11 +183,12 @@ app.put("/api/data/:key", (req, res) => {
         )
     } else {
         const value = String(req.body?.value ?? "");
+        const timestamp = getFormattedTimestamp();
         progress_dashboard_db.prepare(`
             INSERT INTO dataStorage (key, value, updated_at)
-            VALUES (?, ?, datetime('now', '+8 hours'))
-            ON CONFLICT(key) DO UPDATE SET value=excluded.value, updated_at=datetime('now')
-        `).run(key, value);
+            VALUES (?, ?, ?)
+            ON CONFLICT(key) DO UPDATE SET value=excluded.value, updated_at=excluded.updated_at
+        `).run(key, value, timestamp);
         res.json(
             {
                 ok: true
@@ -242,10 +263,11 @@ app.post("/api/history/:key", (req, res) => {
         );
     } else {
         const value = String(req.body?.value ?? "");
+        const timestamp = getFormattedTimestamp();
         history_db.prepare(`
             INSERT INTO history (key, value, updated_at)
-            VALUES (?, ?, datetime('now', '+8 hours'))
-        `).run(key, value);
+            VALUES (?, ?, ?)
+        `).run(key, value, timestamp);
         res.json(
             {
                 ok: true

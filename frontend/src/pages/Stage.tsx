@@ -9,6 +9,28 @@ import "./Stage.css";
 import { checklistMap } from "./Checklists";
 import { useNavigate } from "react-router-dom";
 
+// Helper to format timestamp to YYYY-MM-dd HH:mm:ss
+function formatTimestamp(timestamp: string | null): string | null {
+	if (!timestamp) return null;
+	// If already in correct format, return as-is
+	if (/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/.test(timestamp)) {
+		return timestamp;
+	}
+	// If in ISO format, convert to YYYY-MM-dd HH:mm:ss
+	try {
+		const date = new Date(timestamp);
+		const year = date.getUTCFullYear();
+		const month = String(date.getUTCMonth() + 1).padStart(2, '0');
+		const day = String(date.getUTCDate()).padStart(2, '0');
+		const hours = String(date.getUTCHours()).padStart(2, '0');
+		const minutes = String(date.getUTCMinutes()).padStart(2, '0');
+		const seconds = String(date.getUTCSeconds()).padStart(2, '0');
+		return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+	} catch {
+		return timestamp;
+	}
+}
+
 // Stage() is a component
 export default function Stage() {
 
@@ -83,18 +105,19 @@ export default function Stage() {
 
         // Load initial state
         console.log("Loading initial state...");
-        dataStorage.getData(`stageItemChecked:${carline}-${stage}`).then(value => {
-            console.log("Initial state loaded:", value);
-            if (value) {
-                try {
-                    const checkedState = JSON.parse(value);
-                    console.log("Setting initial checked state:", checkedState);
-                    setChecked(checkedState);
-                } catch (err) {
-                    console.error("Error parsing initial state:", err);
-                }
-            }
-        });
+		dataStorage.getData(`stageItemChecked:${carline}-${stage}`).then(data => {
+			const value = data?.value;
+			console.log("Initial state loaded:", value);
+			if (value) {
+				try {
+					const checkedState = JSON.parse(value);
+					console.log("Setting initial checked state:", checkedState);
+					setChecked(checkedState);
+				} catch (err) {
+					console.error("Error parsing initial state:", err);
+				}
+			}
+		});
 
         return () => {
             console.log("Cleaning up Socket.IO listeners");
@@ -130,7 +153,7 @@ export default function Stage() {
 								<p
 									className={`step-timestamp${checked[index] ? ' step-timestamp-checked' : ''}`}
 								>
-									{stepTimestamps[index] ? stepTimestamps[index] : ""}
+									{formatTimestamp(stepTimestamps[index]) || ""}
 								</p>
 							</td>
 							<td>

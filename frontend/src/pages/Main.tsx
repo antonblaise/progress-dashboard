@@ -55,28 +55,15 @@ export default function Main() {
 		for (const carline of carlines) {
 			for (const stage of stages) {
 				const key = `${slugify(carline)}-${slugify(stage.title)}`;
-				const raw = await dataStorage.getData(`stageProgress:${key}`);
-				const val = Number(raw ?? "0");
-				allProgress[key] = Number.isFinite(val) ? val : 0;
 
-				// Get latest ticked timestamp
-				const checklist = checklistMap[stage.title] || [];
-				let latest = "";
-				for (let i = checklist.length - 1; i >= 0; i--) {
-					const checkedRaw = await dataStorage.getData(`stageItemChecked:${key}`);
-					let checkedArr: boolean[] = [];
-					try {
-						checkedArr = JSON.parse(checkedRaw ?? "[]");
-					} catch {}
-					if (checkedArr[i]) {
-						const historyArr = await history.getHistory(`history:${slugify(carline)}:${slugify(stage.title)}:step-${i}`);
-						if (historyArr.length > 0 && historyArr[0].updated_at) {
-							latest = historyArr[0].updated_at;
-							break;
-						}
-					}
-				}
-				allTimestamps[key] = latest;
+				const progressData = await dataStorage.getData(`stageProgress:${key}`);
+
+				const stageProgress = Number(progressData?.value) || 0;
+				allProgress[key] = stageProgress;
+
+				const timestamp = progressData?.updated_at || "";
+				allTimestamps[key] = timestamp;
+
 			}
 		}
 		setProgress(allProgress);
@@ -102,8 +89,8 @@ export default function Main() {
 		for (const carline of carlines) {
 
 			// Load them from dataStorage
-			const swReleaseName = await (dataStorage.getData(`swReleaseName:${slugify(carline)}`)) ?? "";
-			const integratorName = await (dataStorage.getData(`integratorName:${slugify(carline)}`)) ?? "";
+			const swReleaseName = (await dataStorage.getData(`swReleaseName:${slugify(carline)}`))?.value ?? "";
+			const integratorName = (await dataStorage.getData(`integratorName:${slugify(carline)}`))?.value ?? "";
 
 			// Update the state variables
 			// This is to ensure the input boxes show the latest values from dataStorage.
@@ -252,9 +239,11 @@ export default function Main() {
 													<div className="box-fill" style={{ width: `${progress_percentage}%` }} />
 													<span className="box-progress-text">{progress_percentage}%</span>
 												</div>
-												<div className="box-timestamp">
-													{latestTimestamps[`${carlineSlug}-${stageSlug}`] || ""}
-												</div>
+												{progress_percentage !== 0 && (
+													<div className="box-timestamp">
+														{latestTimestamps[`${carlineSlug}-${stageSlug}`] || ""}
+													</div>
+												)}
 											</div>
 										</Link>
 									</td>
@@ -276,8 +265,19 @@ export default function Main() {
 
 											// Clear all progress for this carline
 											for (const stage of stages) {
-												await dataStorage.removeData(`stageProgress:${slugify(carline)}-${slugify(stage.title)}`);
-												await dataStorage.removeData(`stageItemChecked:${slugify(carline)}-${slugify(stage.title)}`);
+												// (4 Mar 2026) Antonius: We need every data to be kept for history and audit purpose, so we will not delete any data.
+												// await dataStorage.removeData(`stageProgress:${slugify(carline)}-${slugify(stage.title)}`);
+												// await dataStorage.removeData(`stageItemChecked:${slugify(carline)}-${slugify(stage.title)}`);
+
+												// (4 Mar 2026) Antonius: Instead, we will reset the progress to 0 and untick the checked items.
+												await dataStorage.setData(`stageProgress:${slugify(carline)}-${slugify(stage.title)}`, "0");
+												await dataStorage.setData(`stageItemChecked:${slugify(carline)}-${slugify(stage.title)}`, JSON.stringify([]));
+												// write to history for all steps
+												const checklist = checklistMap[stage.title] || [];
+												for (let i = 0; i < checklist.length; i++) {
+													const historyKey = `history:${slugify(carline)}:${slugify(stage.title)}:step-${i}`;
+													await history.writeHistory(historyKey, "false");
+												}
 											}
 
 											// Reload page
