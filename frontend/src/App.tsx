@@ -7,7 +7,6 @@ export default function App() {
 
             <div className="header">
                 <Link to="/main">Main</Link>
-                <Link to="/admin">Admin</Link>
                 <Link to="/login">Login</Link>
             </div>
 
