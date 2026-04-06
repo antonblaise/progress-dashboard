@@ -111,7 +111,7 @@ Using Socket.IO to enable real-time communication between clients and server.
 
     No changes needed in get(), because it only fetches data from backend. It does not alter the db.
 
-4. Update '/src/pages/Main.tsx' as such:
+4. Update '/src/pages/Home.tsx' as such:
 
     - Import socket:
         import { socket } from "../lib/socket";

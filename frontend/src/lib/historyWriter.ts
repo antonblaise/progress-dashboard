@@ -1,5 +1,3 @@
-import { socket } from "../lib/socket";
-
 // The backend URL
 const BACKEND = `${window.location.protocol}//${window.location.hostname}:4000`;
 
@@ -24,11 +22,10 @@ export const history = {
 					headers: {
 						"Content-Type": "application/json",
 					},
+					credentials: "include",
 					body: JSON.stringify({ value })
 				}
 			);
-			// Real-time Socket.IO update
-			socket.emit("historyWrite", { key, value });
 		} catch {
 			// Ignore write errors
 		}

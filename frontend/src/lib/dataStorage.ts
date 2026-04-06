@@ -1,5 +1,3 @@
-import { socket } from "./socket";
-
 // The backend URL
 const BACKEND = `${window.location.protocol}//${window.location.hostname}:4000`;
 
@@ -26,11 +24,10 @@ export const dataStorage = {
 					headers: {
 						"Content-Type": "application/json",
 					},
+					credentials: "include",
 					body: JSON.stringify({ value, updated_at })
 				}
 			);
-			// Real-time Socket.IO update
-			socket.emit("dataUpdate", { key, value, updated_at });
 		} catch {
 			// Ignore write errors
 		}

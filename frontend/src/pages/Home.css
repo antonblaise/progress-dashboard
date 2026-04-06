@@ -59,6 +59,11 @@
     background: transparent;
 }
 
+.sw-release-name[readonly], .integrator-name[readonly] {
+    cursor: default;
+    opacity: 0.7;
+}
+
 .sw-release-name::placeholder, .integrator-name::placeholder {
     color: #ffffff;
     opacity: 0.15;
@@ -132,4 +137,9 @@
 
 .reset-buttons-column button:hover {
     background-color: red;
+}
+
+.reset-buttons-column button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
 }

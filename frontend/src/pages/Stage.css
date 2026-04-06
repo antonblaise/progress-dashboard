@@ -70,6 +70,11 @@ h1 {
     background: none;
 }
 
+.timestamp-cell {
+    width: 160px;
+    text-align: right;
+}
+
 .checklist-item {
     display: flex;
     align-items: center;
@@ -116,6 +121,11 @@ h1 {
     cursor: pointer;
 }
 
+.checklist-item input[type="checkbox"]:disabled {
+    cursor: not-allowed;
+    opacity: 0.5;
+}
+
 /* Timestamp for each checklist step */
 .step-timestamp {
     min-width: 120px;
@@ -144,6 +154,11 @@ h1 {
     background-color: limegreen;
 }
 
+.tickall-button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
 .reset-button {
     background-color: darkslategrey;
     color: white;
@@ -154,5 +169,10 @@ h1 {
 
 .reset-button:hover {
     background-color: red;
+}
+
+.reset-button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
 }
 

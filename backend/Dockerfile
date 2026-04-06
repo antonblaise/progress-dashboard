@@ -6,11 +6,11 @@ FROM node:20-alpine
 # Backend files will be copied into WORKDIR (it will automatically create if not exist).
 WORKDIR /app
 
-# Copy app package JSON files into the container.
-COPY package*.json ./
+# Copy package manifest only (do not copy lockfile).
+COPY package.json ./
 
-# Install all project dependencies (clean install).
-RUN npm ci
+# Install the latest versions allowed by package.json ranges.
+RUN npm install
 
 # Copy all backend code into the container.
 COPY . .

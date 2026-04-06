@@ -1,0 +1,10 @@
+The login flow of the webpage.
+How the credentials entered by the user is hashed and compared against the list of allowed users' hashes.
+
+Frontend
+1. [Login.tsx] 'Sign In' button pressed -> `handleSubmit` function sends the username and password to the `login` function of `auth.tsx`.
+2. [auth.tsx] Sends a POST request to the backend with the username and password in the body of the request.
+
+Backend
+1. [server.ts] The login endpoint hashes the credentials, checks if they match any entry in the list of allowed users, and creates a session if a match is found.
+2. [authUsers.ts] The list of allowed users with their username and password hashes.

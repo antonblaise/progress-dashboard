@@ -1,16 +1,17 @@
-// TSX file for the Main page
+// TSX file for the Home page
 
-import { Link } from "react-router-dom";
+import { Link, Navigate, useParams } from "react-router-dom";
 import { useEffect, useState } from "react";
 
-import { dataStorage } from "../lib/dataStorage";
-import { socket } from "../lib/socket";
-import { history } from "../lib/historyWriter";
-import "./Main.css";
-import { checklistMap } from "./Checklists";
+import { dataStorage } from "../lib/dataStorage.ts";
+import { useAuth } from "../lib/auth.tsx";
+import { socket } from "../lib/socket.ts";
+import { history } from "../lib/historyWriter.ts";
+import "./Home.css";
+import { checklistMap } from "./Checklists.tsx";
 
 // Arrays to store the carlines and stages
-const carlines = [
+const allCarlines = [
 	"U Line",
 	"T Line",
 	"S MOPF Line",
@@ -30,11 +31,33 @@ function slugify(str: string) {
 	return str.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
 }
 
-export default function Main() {
+export default function Home() {
+	const { isAuthenticated } = useAuth();
+
+	// ############################################## //
+	// Show all carlines or only the selected carline //
+	// ############################################## //
+
+	// routeCarline = params.carline 
+	// params is from the URL, defined in main.tsx as /home/:carline
+	const { carline : routeCarline } = useParams();
+
+	// If routeCarline exists, we filter the carlines to only include the one matching the routeCarline.
+	const filteredCarline = allCarlines.find((carline) => slugify(carline) === routeCarline);
+
+	// If not found, filteredCarline = null, and we show all carlines.
+	if (routeCarline && !filteredCarline) {
+		return <Navigate to="/home" replace />;
+	}
+
+	// Finally, to handle the null case, `carlines` will fall back to `allCarllines` if `filteredCarline` is null. 
+	// So if routeCarline is invalid, we show all carlines instead of showing an empty page.
+	// In this way, `carlines` can never be null or empty, ensuring the rest of the code runs smoothly without needing to check for null or empty cases.
+	const carlines = filteredCarline ? [filteredCarline] : allCarlines;
 
 	// ################################## //
 	// Read the progress from dataStorage //
-	// ################################### //
+	// ################################## //
 
 	// 1. progress state - function 'setProgress' updates the variable 'progress', which is replaced by '_' here, as we don't need it.
 	// The output of useState is an array where:
@@ -148,7 +171,7 @@ export default function Main() {
 		return () => {
 			socket.off("dataChange");
 		};
-	}, []);
+	}, [routeCarline]);
 
 
 	// ################################################ //
@@ -156,6 +179,7 @@ export default function Main() {
 	// ################################################ //
 	return (
 		<div className="main-container">
+
 			<table className="main-table">
 
 				<thead>
@@ -178,7 +202,9 @@ export default function Main() {
 						<tr key={carline}>
 
 							{/* 1st column of table data - Carlines */}
-							<td className="carlines">{carline}</td>
+							<td className="carlines">
+								<Link to={`/home/${slugify(carline)}`}>{carline}</Link>
+							</td>
 
 							{/* 2nd column of table data - SW Release names */}
 							<td>
@@ -187,9 +213,13 @@ export default function Main() {
 										title="SW Release Name"
 										type="text"
 										className="sw-release-name"
-										placeholder="Click to enter"
+										placeholder={isAuthenticated ? "Click to enter" : "Login required"}
 										value={swReleaseNames[slugify(carline)] ?? ""} // show saved value
+										readOnly={!isAuthenticated}
 										onChange={async (e) => {
+											if (!isAuthenticated) {
+												return;
+											}
 											const value = e.target.value;
 											// Update local state
 											setSwReleaseNames((prev) => ({
@@ -210,9 +240,13 @@ export default function Main() {
 										title="Integrator"
 										type="text"
 										className="integrator-name"
-										placeholder="Click to enter"
+										placeholder={isAuthenticated ? "Click to enter" : "Login required"}
 										value={integratorNames[slugify(carline)] ?? ""} // show saved value
+										readOnly={!isAuthenticated}
 										onChange={async (e) => {
+											if (!isAuthenticated) {
+												return;
+											}
 											const value = e.target.value;
 											// Update local state
 											setIntegratorNames((prev) => ({
@@ -260,7 +294,11 @@ export default function Main() {
 								<div className="reset-buttons-column">
 									<button
 										title="Reset Buttons"
+										disabled={!isAuthenticated}
 										onClick={async () => {
+											if (!isAuthenticated) {
+												return;
+											}
 
 											// Prompt for confirmation
 											if (!window.confirm(`Are you sure you want to reset all progress for ${carline}? This action cannot be undone.`)) {

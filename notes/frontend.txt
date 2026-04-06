@@ -24,18 +24,18 @@ Setting up frontend
 
 5. Now, we need to make the pages in 'src' folder. First, create the folder 'pages' inside 'src'. Then, create the pages you want inside it, as .tsx files.
 	Example pages:
-	- Main.tsx
+	- Home.tsx
 	- Admin.tsx
 	- Login.tsx
 	To design the pages, create their respective .css files in 'src' as well, and import them in the .tsx files.
 
 6. In those .tsx files, put simple starter codes, like for example:
 
-	export default function Main() {
-		return <h1>Main Page</h1>;
+	export default function Home() {
+		return <h1>Home Page</h1>;
 	}
 
-	Change 'Main' and 'Main Page' to the respective relevant page names.
+	Change 'Home' and 'Home Page' to the respective relevant page names.
 
 7. Now, open this file - 'frontend/src/main.tsx', empty it and write:
 
@@ -44,7 +44,7 @@ Setting up frontend
 	import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 
 	import App from "./App";
-	import Main from "./pages/Main";
+	import Home from "./pages/Home";
 	import Login from "./pages/Login";
 	import Admin from "./pages/Admin";
 
@@ -55,8 +55,8 @@ Setting up frontend
 			<BrowserRouter>
 				<Routes>
 					<Route path="/" element={<App />}>
-					<Route index element={<Navigate to="/main" />} />
-					<Route path="/main" element={<Main />} />
+					<Route index element={<Navigate to="/home" />} />
+					<Route path="/home" element={<Home />} />
 					<Route path="/login" element={<Login />} />
 					<Route path="/admin" element={<Admin />} />
 					</Route>
@@ -66,12 +66,12 @@ Setting up frontend
 	);
 
 	This is to route the pages to their respective links. Change the paths, positions and elements as needed.
-	In this case, notice that whenever the user goes to the root '/', they will be redirected to '/main' page.
+	In this case, notice that whenever the user goes to the root '/', they will be redirected to '/home' page.
 
 8. Now, to understand what each .tsx file is:
 	- main.tsx 			- The entry point component. The starting engine of the entire app. It sets up and loads the routing and renders the App component.
 	- App.tsx 			- The global layout component, wraps around all pages. It contains the common layout elements like header, footer, and a placeholder for rendering the current page based on the route.
-	- ./pages/*.tsx 	- The individual page components, like Main, Login, Admin. Each represents a different page/view in the app.
+	- ./pages/*.tsx 	- The individual page components, like Home, Login, Admin. Each represents a different page/view in the app.
 	React apps don't use inidividual HTML files for each page. Instead, they use components and routing to dynamically render different views within a single-page application (SPA).
 
 9. Now, you can clear the 'src/App.css' file, and edit as you like.

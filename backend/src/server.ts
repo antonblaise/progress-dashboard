@@ -2,8 +2,10 @@ import express from "express"
 import cookieParser from "cookie-parser"
 import cors from "cors"
 import { progress_dashboard_db, history_db } from "./db";
+import { authUsers } from "./authUsers";
 import { createServer } from "http";
 import { Server } from "socket.io";
+import crypto from "crypto";
 
 // Prefixes used in db data keys. Allowed = false if key given doesn't start with them.
 const ALLOWED_PREFIXES = [
@@ -30,6 +32,60 @@ function getFormattedTimestamp(): string {
     return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
 }
 
+const SESSION_COOKIE_NAME = "progress_dashboard_session";
+const sessionStore = new Map<string, string>();
+
+// Create a session for the authenticated user by generating a random session token,
+// storing it in the session store with the associated username hash,
+// and setting a cookie in the response with the session token.
+function createSession(res: express.Response, usernameHash: string) {
+    const sessionToken = crypto.randomBytes(32).toString("hex");
+    sessionStore.set(sessionToken, usernameHash);
+    res.cookie(SESSION_COOKIE_NAME, sessionToken, {
+        httpOnly: true,
+        sameSite: "lax",
+        secure: false,                      // Set to true if using HTTPS
+        maxAge: 7 * 24 * 60 * 60 * 1000,    // 7 days in milliseconds
+    });
+}
+
+// Clear the session associated with the request by deleting the session token from the session store and clearing the cookie in the response.
+function clearSession(req: express.Request, res: express.Response) {
+    const sessionToken = req.cookies?.[SESSION_COOKIE_NAME];
+    if (sessionToken) {
+        sessionStore.delete(sessionToken);
+    }
+
+    res.clearCookie(SESSION_COOKIE_NAME, {
+        httpOnly: true,
+        sameSite: "lax",
+        secure: false,
+    });
+}
+
+// Get the authenticated user's username hash by looking up the session token from the request cookies in the session store.
+function getAuthenticatedUser(req: express.Request) {
+    const sessionToken = req.cookies?.[SESSION_COOKIE_NAME];
+    if (!sessionToken) {
+        return null;
+    }
+
+    return sessionStore.get(sessionToken) ?? null;
+}
+
+// Middleware to require authentication for protected routes.
+// It checks if the user is authenticated by looking up the session token in the cookies
+// and returns the username hash if authenticated, or sends a 401 response if not authenticated.
+function requireAuth(req: express.Request, res: express.Response) {
+    const usernameHash = getAuthenticatedUser(req);
+    if (!usernameHash) {
+        res.status(401).json({ error: "Authentication required" });
+        return null;
+    }
+
+    return usernameHash;
+}
+
 // Create an Express app and a HTTP server to wrap it.
 // Client Request → HTTP Server → Express App → Routes
 //               ↑               ↑             ↑
@@ -42,7 +98,7 @@ const io = new Server(httpServer, {
     cors: {
         origin: true,
         credentials: true,
-        methods: ["GET", "PUT", "DELETE", "OPTIONS"],
+        methods: ["GET", "PUT", "POST", "DELETE", "OPTIONS"],
         allowedHeaders: ["Content-Type", "Authorization"]
     }
 });
@@ -54,71 +110,14 @@ app.use(cors(
     {
         origin: true,
         credentials: true,
-        methods: ["GET", "PUT", "DELETE", "OPTIONS"],
+        methods: ["GET", "PUT", "POST", "DELETE", "OPTIONS"],
         allowedHeaders: ["Content-Type", "Authorization"]
     }
 ));
 
 // Socket.IO event handlers
 io.on("connection", (socket) => {
-    // Listen for data updates from clients
-    socket.on("dataUpdate", ({ key, value }) => {
-        // Broadcast the update to all other connected clients
-        socket.broadcast.emit("dataUpdate", { key, value });
-    });
-    
     console.log("Client connected.");
-
-    // Listen for data updates
-    socket.on("dataUpdate", async ({key, value}) => {
-
-        if (prefixAllowed(key)) {
-
-            // Update database
-            const timestamp = getFormattedTimestamp();
-            await progress_dashboard_db.prepare(`
-                INSERT INTO dataStorage (key, value, updated_at)
-                VALUES (?, ?, ?)
-                ON CONFLICT(key) DO UPDATE SET value=excluded.value, updated_at=excluded.updated_at
-            `).run(key, value, timestamp);
-
-            // Retrieve the stored timestamp to broadcast
-            const row = progress_dashboard_db
-                .prepare("SELECT updated_at FROM dataStorage WHERE key = ?")
-                .get(key) as { updated_at?: string } | undefined;
-            const updated_at = row?.updated_at ?? "";
-
-            // Broadcast to all other clients
-            socket.broadcast.emit(
-                "dataChange",
-                {key, value, updated_at}
-            );
-
-        }
-
-    });
-
-    // Listen to history writes
-    socket.on("historyWrite", async ({key, value}) => {
-
-        if (prefixAllowed(key)) {
-
-            // Update history database
-            const timestamp = getFormattedTimestamp();
-            await history_db.prepare(`
-                INSERT INTO history (key, value, updated_at)
-                VALUES (?, ?, ?)
-            `).run(key, value, timestamp);
-
-            // Broadcast to all other clients
-            socket.broadcast.emit(
-                "historyAdded",
-                {key, value}
-            );
-
-        }
-
-    });
 
     socket.on("disconnect", () => {
         console.log("Client disconnected.")
@@ -139,6 +138,49 @@ httpServer.listen(PORT, "0.0.0.0", () => {
 // When the address is visited, this message will be shown.
 app.get("/", (_req, res) => {
     res.send("✅ Backend is running successfully!");
+});
+
+// --- Authentication Endpoints --- //
+
+// This endpoint checks if the user is authenticated by looking up the session token in the cookies and returns the authentication status and username if authenticated.
+app.get("/api/auth/session", (req, res) => {
+    const usernameHash = getAuthenticatedUser(req);
+    res.json({
+        authenticated: usernameHash !== null,
+        username: usernameHash,
+    });
+});
+
+// This endpoint handles login attempts.
+// It hashes the provided username and password and checks if they match any entry in the list of allowed users.
+// If a match is found, a session is created; otherwise, an error response is returned.
+app.post("/api/auth/login", (req, res) => {
+    const usernameHash = crypto.createHash("sha256").update(String(req.body?.username ?? "")).digest("hex");
+    const passwordHash = crypto.createHash("sha256").update(String(req.body?.password ?? "")).digest("hex");
+
+    console.log("[auth] login attempt", {
+        usernameHash,
+        passwordHash,
+    });
+
+    // Check if the username and password hashes match any entry in the list of allowed users.
+    const matchedUser = authUsers.find(
+        (user) => user.username === usernameHash && user.password === passwordHash,
+    );
+
+    if (!matchedUser) {
+        clearSession(req, res);
+        return res.status(401).json({ ok: false, error: "Invalid username or password" });
+    }
+
+    createSession(res, matchedUser.username);
+    return res.json({ ok: true, username: matchedUser.username });
+});
+
+// This endpoint handles logout attempts by clearing the session associated with the request and returning a success response.
+app.post("/api/auth/logout", (req, res) => {
+    clearSession(req, res);
+    res.json({ ok: true });
 });
 
 // --- Data Storage Endpoints --- //
@@ -173,6 +215,10 @@ app.get("/api/data/:key", (req, res) => {
 // Write data to an API endpoint.
 app.put("/api/data/:key", (req, res) => {
 
+    if (!requireAuth(req, res)) {
+        return;
+    }
+
     const key = req.params.key;
 
     if(!prefixAllowed(key)) {
@@ -189,6 +235,7 @@ app.put("/api/data/:key", (req, res) => {
             VALUES (?, ?, ?)
             ON CONFLICT(key) DO UPDATE SET value=excluded.value, updated_at=excluded.updated_at
         `).run(key, value, timestamp);
+        io.emit("dataChange", { key, value, updated_at: timestamp });
         res.json(
             {
                 ok: true
@@ -201,6 +248,10 @@ app.put("/api/data/:key", (req, res) => {
 // DELETE value
 // Delete data from an API endpoint.
 app.delete("/api/data/:key", (req, res) => {
+
+    if (!requireAuth(req, res)) {
+        return;
+    }
 
     const key = req.params.key;
 
@@ -253,6 +304,10 @@ app.get("/api/history/:key", (req, res) => {
 // Add a new entry to an entry's history from an API endpoint.
 app.post("/api/history/:key", (req, res) => {
 
+    if (!requireAuth(req, res)) {
+        return;
+    }
+
     const key = req.params.key;
 
     if (!prefixAllowed(key)) {
@@ -268,6 +323,7 @@ app.post("/api/history/:key", (req, res) => {
             INSERT INTO history (key, value, updated_at)
             VALUES (?, ?, ?)
         `).run(key, value, timestamp);
+        io.emit("historyAdded", { key, value, updated_at: timestamp });
         res.json(
             {
                 ok: true

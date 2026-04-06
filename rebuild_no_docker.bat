@@ -20,8 +20,10 @@ cd ../..
 
 :: Install dependencies
 cd backend
+cmd /c npm audit fix
 cmd /c npm ci
 cd ../frontend
+cmd /c npm audit fix
 cmd /c npm ci
 cd ..
 

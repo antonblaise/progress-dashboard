@@ -5,7 +5,8 @@ import ReactDOM from "react-dom/client";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 
 import App from "./App";
-import Main from "./pages/Main";
+import { AuthProvider } from "./lib/auth.tsx";
+import Home from "./pages/Home.tsx";
 import Login from "./pages/Login";
 import Stage from "./pages/Stage";
 
@@ -13,38 +14,41 @@ import "./index.css";
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
     <React.StrictMode>
-        <BrowserRouter>
-            <Routes>
-                <Route path="/" element={<App />}>
-                    <Route index element={<Navigate to="/main" />} />
+        <AuthProvider>
+            <BrowserRouter>
+                <Routes>
+                    <Route path="/" element={<App />}>
+                        <Route index element={<Navigate to="/home" />} />
 
-                    <Route path="/main" element={<Main />} />
-                    <Route path="/login" element={<Login />} />
+                        <Route path="/home" element={<Home />} />
+                        <Route path="/home/:carline" element={<Home />} />
+                        <Route path="/login" element={<Login />} />
 
-                    <Route 
-                        path="/checklist/:carline/:stage" 
-                        element={<Stage />} 
-                    />
-                    <Route
-                        path="/checklist/:carline"
-                        element={
-                            (() => {
-                                const carline = location.pathname.split("/")[2];
-                                return <Navigate to={`/checklist/${carline}/stage-1`} replace />;
-                            })()
-                        }
-                    />
-                    <Route
-                        path="/checklist"
-                        element={
-                            (() => {
-                                return <Navigate to="/main" />;
-                            })()
-                        }
-                    />
+                        <Route 
+                            path="/checklist/:carline/:stage" 
+                            element={<Stage />} 
+                        />
+                        <Route
+                            path="/checklist/:carline"
+                            element={
+                                (() => {
+                                    const carline = location.pathname.split("/")[2];
+                                    return <Navigate to={`/checklist/${carline}/stage-1`} replace />;
+                                })()
+                            }
+                        />
+                        <Route
+                            path="/checklist"
+                            element={
+                                (() => {
+                                    return <Navigate to="/home" />;
+                                })()
+                            }
+                        />
 
-                </Route>
-            </Routes>
-        </BrowserRouter>
+                    </Route>
+                </Routes>
+            </BrowserRouter>
+        </AuthProvider>
     </React.StrictMode>
 );

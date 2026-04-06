@@ -3,6 +3,7 @@
 import { useParams } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { dataStorage } from "../lib/dataStorage";
+import { useAuth } from "../lib/auth.tsx";
 import { history } from "../lib/historyWriter";
 import { socket } from "../lib/socket";
 import "./Stage.css";
@@ -33,6 +34,7 @@ function formatTimestamp(timestamp: string | null): string | null {
 
 // Stage() is a component
 export default function Stage() {
+	const { isAuthenticated } = useAuth();
 
 	// Read variables 'carline' and 'stage' from routed path (/:carline/:stage) in main.tsx.
 	const { carline, stage } = useParams();
@@ -100,8 +102,8 @@ export default function Stage() {
             }
         };
 
-        console.log("Setting up Socket.IO listeners for:", `stageItemChecked:${carline}-${stage}`);
-        socket.on("dataUpdate", handleDataChange);
+		console.log("Setting up Socket.IO listeners for:", `stageItemChecked:${carline}-${stage}`);
+		socket.on("dataChange", handleDataChange);
 
         // Load initial state
         console.log("Loading initial state...");
@@ -121,7 +123,7 @@ export default function Stage() {
 
         return () => {
             console.log("Cleaning up Socket.IO listeners");
-            socket.off("dataUpdate", handleDataChange);
+			socket.off("dataChange", handleDataChange);
         };
     }, [carline, stage])
 
@@ -149,7 +151,7 @@ export default function Stage() {
 				<tbody>
 					{checklist_statements.map((item, index) => (
 						<tr key={index}>
-							<td style={{ width: '160px', textAlign: 'right' }}>
+							<td className="timestamp-cell">
 								<p
 									className={`step-timestamp${checked[index] ? ' step-timestamp-checked' : ''}`}
 								>
@@ -163,7 +165,11 @@ export default function Stage() {
 											type="checkbox"
 											checked={!!checked[index]}
 											title={item.text}
+											disabled={!isAuthenticated}
 											onChange={async (e) => {
+												if (!isAuthenticated) {
+													return;
+												}
 												const next = [...checked];
 												next[index] = e.target.checked;
 												setChecked(next);
@@ -206,7 +212,11 @@ export default function Stage() {
 				<button
 					title="Done"
 					className="tickall-button"
+					disabled={!isAuthenticated}
 					onClick={async () => {
+						if (!isAuthenticated) {
+							return;
+						}
 						const done = Array(checklist_statements.length).fill(true);
 						dataStorage.setData(`stageItemChecked:${carline}-${stage}`, JSON.stringify(done));
 						dataStorage.setData(`stageProgress:${carline}-${stage}`, "100");
@@ -228,7 +238,11 @@ export default function Stage() {
 				<button
 					title="Reset"
 					className="reset-button"
+					disabled={!isAuthenticated}
 					onClick={async () => {
+						if (!isAuthenticated) {
+							return;
+						}
 						const reset = new Array(checklist_statements.length).fill(false);
 						dataStorage.setData(`stageItemChecked:${carline}-${stage}`, JSON.stringify(reset));
 						dataStorage.setData(`stageProgress:${carline}-${stage}`, "0");
